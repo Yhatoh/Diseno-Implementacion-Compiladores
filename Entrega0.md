@@ -9,9 +9,9 @@ See the [detailed description](https://users.dcc.uchile.cl/~etanter/CC5116/#%28p
 
 The organization of the repository is designed for the development of your compiler. 
 
-- `compiler/`: the compiler **(E0: the interpreter)**, defined as a dune library 
+- `compiler/`: the interpreter, defined as a dune library 
 (using a library allows us to play with our code in a REPL, see below)
-- `bin/`: top-level executables for the compiler **(E0: interpreter)** and tests 
+- `bin/`: top-level executables for the interpreter and tests 
 - `dune-workspace`, `dune-project`: root configuration for the dune package manager
 - `Makefile`: shortcuts to build and test
 
