@@ -12,9 +12,8 @@ In this homework we're not yet building a compiler, so we just use the OCaml par
 
 The organization of the repository is as follows 
 
-- `dev/`: source code for the interpreter, separated in several modules: `Ast`, `Parse`, `Interp`, and `Lib`. 
-Each module is in its own file (eg. `ast.ml`). See the `dune` file for the declaration of the modules, and the dependencies.
-- `execs/`: top-level executables for the interpreter and tests. See the `dune` file for the declaration of the modules, and the dependencies.
+- `dev/`: source code for the interpreter, separated in several modules: `Ast`, `Parse`, `Interp`, and `Lib` (all are sub-modules of the `Dev` top-level module). Each module is in its own file (eg. `ast.ml`). See the `dune` file for the declaration of the modules, and the dependencies.
+- `execs/`: top-level modules for executables, for the interpreter and tests. See the `dune` file for the declaration of the modules, and the dependencies.
 - `dune-workspace`, `dune-project`: root configuration for the dune package manager
 - `Makefile`: shortcuts to build and test
 
@@ -52,7 +51,7 @@ A test is built with the `check` function which takes the following parameters:
 There is a sample source file `example.src`, with a simple expression in it. 
 To run it, use `dune exec execs/run.exe prog.src`.
 
-To execute your interpreter interactively, use `dune utop` in a terminal, and then load the interpreter (`open Compiler.Interp;;`).
+To execute your interpreter interactively, use `dune utop` in a terminal, and then load the interpreter (`open Dev.Interp;;`).
 
 ## Resources
 
