@@ -1,5 +1,6 @@
-# CDI-reference
-Starter code for [first OCaml homework](https://users.dcc.uchile.cl/~etanter/CC5116/hw_0_enunciado.html)
+# Starter Code Entrega 0
+
+Starter code for the [first OCaml homework](https://users.dcc.uchile.cl/~etanter/CC5116/hw_0_enunciado.html)
 
 ## Requirements & Setup
 
