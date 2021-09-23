@@ -6,11 +6,13 @@ type reg =
 | RSP
 
 (* tags *)
+(*
 type tag =
 | Tag of string
 | IfTrue of int64
 | IfFalse of int64
 | IfDone of int64
+*)
 
 (* arguments for instructions *)
 type arg =
@@ -26,9 +28,11 @@ type instruction =
 | ISub of arg * arg
 | IAnd of arg * arg
 | ICmp of arg * arg
-| IJmp of tag
-| IJe of tag
-| IJle of tag
+| IJmp of string
+| IJe of string
+| IJle of string
+| IJg of string
+| ILabel of string
 (* TO BE COMPLETED *)
 
 let pp_reg reg : string =
@@ -42,13 +46,14 @@ let pp_arg arg : string =
   | Reg r -> pp_reg r
   | StackPtr (r, n) -> sprintf "[%s - %Ld]" (pp_reg r) (Int64.mul 8L n)
 
+(*
 let pp_tag tag : string =
   match tag with
   | Tag t -> t
   | IfTrue n -> sprintf "if_true_%Ld" n
   | IfFalse n -> sprintf "if_false_%Ld" n
   | IfDone n -> sprintf "if_done_%Ld" n
-
+*)
 
 let pp_instr instr : string =
   match instr with
@@ -58,9 +63,11 @@ let pp_instr instr : string =
   | ISub (a1, a2) -> sprintf "  sub %s, %s" (pp_arg a1) (pp_arg a2)
   | IAnd (a1, a2) -> sprintf "  and %s, %s" (pp_arg a1) (pp_arg a2)
   | ICmp (a1, a2) -> sprintf "  cmp %s, %s" (pp_arg a1) (pp_arg a2)
-  | IJmp tg -> sprintf "  jmp %s" (pp_tag tg)
-  | IJe tg -> sprintf "  je %s" (pp_tag tg)
-  | IJle tg -> sprintf "  jle %s" (pp_tag tg)
+  | IJmp tg -> sprintf "  jmp %s" tg
+  | IJe tg -> sprintf "  je %s" tg
+  | IJle tg -> sprintf "  jle %s" tg
+  | IJg tg -> sprintf "  jg %s" tg
+  | ILabel tg -> sprintf "%s:" tg
   (* TO BE COMPLETED *)
 
 let pp_instrs (instrs : instruction list) : string =
