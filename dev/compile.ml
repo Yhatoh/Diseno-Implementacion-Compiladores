@@ -57,7 +57,6 @@ let compile_lte (rax: arg) (rsp_ptr: arg) (tag : int) : instruction list =
    iMov_bool_to_rax false; 
    i_label done_label]
 
-
 let binop_to_instr (op : prim2) (slot : int64) (tag : int) : instruction list =
   let rsp_ptr = rsp_pointer slot in
   let as_list (fn : (arg -> arg -> instruction)) : (arg -> arg -> instruction list) =
@@ -74,12 +73,17 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) : instruction list =
     | Lte -> compile_lte_with_tag
   in
   builder rax rsp_ptr
-  (*match op with 
-  | Add -> [iAdd_arg_arg rax rsp_ptr]
-  | And -> [iAnd_arg_arg rax rsp_ptr]
-  | Lte -> compile_lte rax rsp_ptr tag*)
 
-(* Algebraic datatype for expressions *)
+
+let unop_to_instr_list (op: prim1) : instruction list =
+  let builder =
+    match op with
+    | Add1 -> iAdd_arg_const
+    | Sub1 -> iSub_arg_const
+  in
+  [builder rax 2L]
+
+(* Algebraic datatype for tagged expressions *)
 type 'a texpr = 
   | TNum of int64 * 'a 
   | TBool of bool * 'a
@@ -116,15 +120,31 @@ let tag (e : expr) : tag texpr =
   in
   let (tagged, _) = help e 1 in tagged;;
 
+(* Pretty printing - used by testing framework *)
+let rec string_of_tag_expr(e : tag texpr) : string = 
+  match e with
+  | TNum (n, tag) -> sprintf "tag_%d %s" tag (Int64.to_string n)
+  | TBool (b, tag) -> sprintf "tag_%d %s" tag (if b then "true" else "false")
+  | TId (s, tag) -> sprintf "tag_%d %s" tag s
+  | TPrim1 (op, e, tag) -> sprintf "(tag_%d %s %s)" tag
+    (match op with
+    | Add1 -> "add1"
+    | Sub1 -> "sub1") (string_of_tag_expr e)
+  | TPrim2 (op, e1, e2, tag) -> sprintf "(tag_%d %s %s %s)" tag 
+    (match op with 
+    | Add -> "+"
+    | And -> "&&"
+    | Lte -> "<=") (string_of_tag_expr e1) (string_of_tag_expr e2)
+  | TLet (x, e1, e2, tag) -> sprintf "(tag_%d let (%s %s) %s)" tag x (string_of_tag_expr e1) (string_of_tag_expr e2) 
+  | TIf (e1, e2, e3, tag) -> sprintf "(tag_%d if %s %s %s)" tag (string_of_tag_expr e1) (string_of_tag_expr e2) (string_of_tag_expr e3)
 
-let unop_to_instr_list (compiled_n : instruction list) (op: prim1) (rax: arg) : instruction list =
-  let builder =
-    match op with
-    | Add1 -> iAdd_arg_const
-    | Sub1 -> iSub_arg_const
-  in
-  compiled_n @ [builder rax 2L]
 
+let binop_boolean_to_instr_list (second_part : instruction list) (tag : int) (skip_value : bool) : instruction list =
+  let skip_label = sprintf "skip_%d" tag in
+  [iCmp_arg_const rax (bool_to_int skip_value)]
+  @ [i_je skip_label]
+  @ second_part
+  @ [i_label skip_label]
 
 let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) : instruction list =
   let next_slot = (Int64.add slot 1L) in
@@ -132,15 +152,25 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) : inst
   let mov_rax_to_rsp = iMov_arg_arg rsp_ptr rax in
   let compile_prim1 (op: prim1) (n: tag texpr) : instruction list =
     let compiled_n = (compile_expr n slot_env slot) in
-    unop_to_instr_list compiled_n op rax
+    (compiled_n)@ unop_to_instr_list op
   in
   let compile_prim2 (op : prim2) (n1 : tag texpr) (n2 : tag texpr) (tag : int) : instruction list =
     let compile_e (n : tag texpr) (slot : int64): instruction list = compile_expr n slot_env slot in
-    (compile_e n1 slot) @ [mov_rax_to_rsp]
-    @ (compile_e n2 next_slot) 
-    @ [iMov_arg_arg (rsp_pointer next_slot) rax]
-    @ [iMov_arg_arg rax rsp_ptr]
-    @ (binop_to_instr op next_slot tag)
+    let compiled_e1 = compile_e n1 slot in
+    let compiled_e2 = compile_e n2 next_slot in 
+    let second_part = 
+      [mov_rax_to_rsp]
+      @ compiled_e2
+      @ [iMov_arg_arg (rsp_pointer next_slot) rax]
+      @ [iMov_arg_arg rax rsp_ptr]
+      @ (binop_to_instr op next_slot tag)
+    in
+    compiled_e1
+    @ (begin match op with
+        | And -> binop_boolean_to_instr_list second_part tag false
+        | Add -> second_part
+        | Lte -> second_part
+      end)
   in
   let compile_let (x : string) (v : tag texpr) (e : tag texpr) : instruction list =
     let new_slot_env : slot_env = extend_slot_env x slot slot_env in

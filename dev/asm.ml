@@ -46,15 +46,6 @@ let pp_arg arg : string =
   | Reg r -> pp_reg r
   | StackPtr (r, n) -> sprintf "[%s - %Ld]" (pp_reg r) (Int64.mul 8L n)
 
-(*
-let pp_tag tag : string =
-  match tag with
-  | Tag t -> t
-  | IfTrue n -> sprintf "if_true_%Ld" n
-  | IfFalse n -> sprintf "if_false_%Ld" n
-  | IfDone n -> sprintf "if_done_%Ld" n
-*)
-
 let pp_instr instr : string =
   match instr with
   | IRet -> "  ret" 

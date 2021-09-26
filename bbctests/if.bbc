@@ -1,0 +1,6 @@
+NAME: if
+DESCRIPTION: conditional
+SRC:
+(if (&& true false) true false)
+EXPECTED:
+|INTERPRET

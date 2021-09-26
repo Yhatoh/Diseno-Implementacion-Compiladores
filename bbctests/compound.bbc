@@ -1,0 +1,10 @@
+NAME: compound
+DESCRIPTION: all the operatios together
+SRC:
+(let (x true)
+  (let (y 10)
+    (if (&& (<= y 20) x)
+      (<= (+ y (add1 y)) 20)
+      (&& (<= y 30) x))))
+EXPECTED:
+|INTERPRET

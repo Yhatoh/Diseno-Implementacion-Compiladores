@@ -8,6 +8,18 @@ extern u64 our_code_starts_here() asm("our_code_starts_here");
 
 int main(int argc, char** argv) {
   u64 result = our_code_starts_here();
-  printf("%" PRId64 "\n", result);
+
+  u64 check = result & 1LL;
+  result >>= 1;
+  
+  if(check){
+    if(result){
+      printf("true\n");
+    } else {
+      printf("false\n");
+    }
+  } else {
+    printf("%" PRId64 "\n", result);
+  }
   return 0;
 }

@@ -42,9 +42,17 @@ let rec interp expr env =
   | Num n -> NumV n
   | Bool b -> BoolV b
   | Prim1 (op, e) -> 
+    (*this makes an error in the interp, because this call liftIII like
+      + 1 (interp e env) 
+      or 
+      - 1 (interp e env) 
+
+      making the operation Sub1 wrong, so we change the operation to make
+      sub1 correct
+    *)
     (match op with
-    | Add1 -> liftIII ( Int64.add ) (NumV 1L)
-    | Sub1 -> liftIII ( Int64.sub ) (NumV 1L)) (interp e env)
+    | Add1 -> liftIII ( Int64.add )
+    | Sub1 -> liftIII ( Int64.sub )) (interp e env) (NumV 1L)
   | Prim2 (op, e1, e2) -> 
     (match op with
     | Add -> liftIII ( Int64.add ) 
