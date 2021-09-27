@@ -1,0 +1,6 @@
+NAME: not true
+DESCRIPTION: not of a true value
+SRC:
+(not true)
+EXPECTED:
+|INTERPRET

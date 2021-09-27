@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   result >>= 1;
   
   if(check){
-    if(result){
+    if(result & 1LL){
       printf("true\n");
     } else {
       printf("false\n");

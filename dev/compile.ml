@@ -39,6 +39,8 @@ let iSub_arg_const (arg1 : arg) (n : int64) : instruction = ISub (arg1, const_fa
 let iCmp_arg_arg (arg1 : arg) (arg2 : arg) : instruction = ICmp (arg1, arg2)
 let iCmp_arg_const (arg1 : arg) (n : int64) : instruction = ICmp (arg1, const_factory n)
 
+let iNot_arg (a : arg) : instruction = INot a
+
 let i_jmp (label : string) : instruction = IJmp label
 let i_je (label : string) : instruction = IJe label
 let i_jg (label : string) : instruction = IJg label
@@ -76,12 +78,16 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) : instruction list =
 
 
 let unop_to_instr_list (op: prim1) : instruction list =
+  let iAdd1_arg_list (a : arg) : instruction list = [iAdd_arg_const a 2L] in
+  let iSub1_arg_list (a : arg) : instruction list = [iSub_arg_const a 2L] in
+  let iNot_arg_list (a : arg) : instruction list = [iNot_arg a ; iAdd_arg_const a 1L] in
   let builder =
     match op with
-    | Add1 -> iAdd_arg_const
-    | Sub1 -> iSub_arg_const
+    | Add1 -> iAdd1_arg_list
+    | Sub1 -> iSub1_arg_list
+    | Not -> iNot_arg_list
   in
-  [builder rax 2L]
+  builder rax
 
 (* Algebraic datatype for tagged expressions *)
 type 'a texpr = 
@@ -129,7 +135,8 @@ let rec string_of_tag_expr(e : tag texpr) : string =
   | TPrim1 (op, e, tag) -> sprintf "(tag_%d %s %s)" tag
     (match op with
     | Add1 -> "add1"
-    | Sub1 -> "sub1") (string_of_tag_expr e)
+    | Sub1 -> "sub1"
+    | Not -> "not") (string_of_tag_expr e)
   | TPrim2 (op, e1, e2, tag) -> sprintf "(tag_%d %s %s %s)" tag 
     (match op with 
     | Add -> "+"

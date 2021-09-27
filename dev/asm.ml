@@ -27,6 +27,7 @@ type instruction =
 | IAdd of arg * arg
 | ISub of arg * arg
 | IAnd of arg * arg
+| INot of arg
 | ICmp of arg * arg
 | IJmp of string
 | IJe of string
@@ -53,6 +54,7 @@ let pp_instr instr : string =
   | IAdd (a1, a2) -> sprintf "  add %s, %s" (pp_arg a1) (pp_arg a2)
   | ISub (a1, a2) -> sprintf "  sub %s, %s" (pp_arg a1) (pp_arg a2)
   | IAnd (a1, a2) -> sprintf "  and %s, %s" (pp_arg a1) (pp_arg a2)
+  | INot a -> sprintf "  not %s" (pp_arg a)
   | ICmp (a1, a2) -> sprintf "  cmp %s, %s" (pp_arg a1) (pp_arg a2)
   | IJmp tg -> sprintf "  jmp %s" tg
   | IJe tg -> sprintf "  je %s" tg

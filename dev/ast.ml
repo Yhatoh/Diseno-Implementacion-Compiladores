@@ -2,7 +2,7 @@
 open Printf
 
 (* primitive operators *)
-type prim1 = Add1 | Sub1
+type prim1 = Add1 | Sub1 | Not
 type prim2 = Add | And | Lte 
 
 (* Algebraic datatype for expressions *)
@@ -24,7 +24,8 @@ let rec string_of_expr(e : expr) : string =
   | Prim1 (op, e) -> sprintf "(%s %s)" 
     (match op with
     | Add1 -> "add1"
-    | Sub1 -> "sub1") (string_of_expr e)
+    | Sub1 -> "sub1"
+    | Not -> "not") (string_of_expr e)
   | Prim2 (op, e1, e2) -> sprintf "(%s %s %s)" 
     (match op with 
     | Add -> "+"

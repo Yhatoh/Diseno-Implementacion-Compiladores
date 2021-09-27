@@ -14,7 +14,7 @@ El tipo de dato `bool` ha sido implementado. Para distinguirse del tipo `int`, s
 - La comparación `<=` sobre enteros está implementada y testeada.
 
 #### Operación unaria `not`
-_To be added..._
+La operación `not` funciona para tipos de datos booleanos y contiene sus tests correspondientes.
 
 ### Condicionales `if`
 Nuestra implementación de los condicionales `if` cumplen con el formato solicitado y está testeada.

@@ -129,6 +129,11 @@ let test_constructor_icmp_arg_const () =
     (iCmp_arg_const (Reg RAX) (1L))
     (ICmp (Reg RAX, Const 1L))
 
+let test_constructor_inot_arg () =
+  check instruction "same instruction"
+    (iNot_arg (Reg RAX))
+    (INot (Reg RAX))
+
 let test_constructor_i_jmp () =
   check instruction "same instruction"
     (i_jmp "a_label")
@@ -159,6 +164,11 @@ let test_unop_to_instr_list_sub1 () =
   check instruction_list "same instruction_list"
     (unop_to_instr_list Sub1)
     ([ISub (Reg RAX, Const 2L)])
+  
+let test_unop_to_instr_list_not () =
+  check instruction_list "same instruction_list"
+    (unop_to_instr_list Not)
+    ([INot (Reg RAX) ; IAdd (Reg RAX, Const 1L)])
 
 let test_binop_to_instr_list_add () =
   check instruction_list "same instruction_list"
@@ -233,6 +243,11 @@ let test_tag_sub1 () =
   check tag_expr "same tag_expr"
     (tag (Prim1 (Sub1, Num 1L)))
     (TPrim1 (Sub1, (TNum (1L, 2)), 1))
+
+let test_tag_not () = 
+  check tag_expr "same tag_expr"
+    (tag (Prim1 (Not, Bool true)))
+    (TPrim1 (Not, (TBool (true, 2)), 1))
 
 let test_tag_add () = 
   check tag_expr "same tag_expr"
@@ -319,6 +334,11 @@ let test_compile_sub1 () =
   check instruction_list "same instruction_list"
     (compile_expr (TPrim1 (Sub1, (TNum (1L, 2)), 1)) empty_slot_env 1L)
     ([IMov (Reg RAX, Const 2L); ISub (Reg RAX, Const 2L)])
+
+let test_compile_not () = 
+  check instruction_list "same instruction_list"
+    (compile_expr (TPrim1 (Not, (TBool (false, 2)), 1)) empty_slot_env 1L)
+    ([IMov (Reg RAX, Const 1L); INot (Reg RAX) ; IAdd (Reg RAX, Const 1L)])
 
 let test_compile_add () = 
   check instruction_list "same instruction_list"
@@ -486,6 +506,7 @@ let ocaml_tests = [
     test_case "A sub const to arg constructor" `Quick test_constructor_isub_arg_const;
     test_case "A cmp arg to arg constructor" `Quick test_constructor_icmp_arg_arg;
     test_case "A cmp const to arg constructor" `Quick test_constructor_icmp_arg_const;
+    test_case "A not constructor from an arg" `Quick test_constructor_inot_arg;
     test_case "A jmp constructor" `Quick test_constructor_i_jmp;
     test_case "A je constructor" `Quick test_constructor_i_je;
     test_case "A jg constructor" `Quick test_constructor_i_jg;
@@ -494,6 +515,7 @@ let ocaml_tests = [
   "operators_to_instr_list", [
     test_case "A add1 operation to instr list" `Quick test_unop_to_instr_list_add1;
     test_case "A sub1 operation to instr list" `Quick test_unop_to_instr_list_sub1;
+    test_case "A not operation to instr list" `Quick test_unop_to_instr_list_not;
     test_case "A + operation to instr list" `Quick test_binop_to_instr_list_add;
     test_case "A && operation to instr list" `Quick test_binop_to_instr_list_and;
     test_case "A <= operation to instr list" `Quick test_binop_to_instr_list_lte;
@@ -506,6 +528,7 @@ let ocaml_tests = [
     test_case "Tag a id" `Quick test_tag_id;
     test_case "Tag a add1" `Quick test_tag_add1;
     test_case "Tag a sub1" `Quick test_tag_sub1;
+    test_case "Tag a not" `Quick test_tag_not;
     test_case "Tag a +" `Quick test_tag_add;
     test_case "Tag a &&" `Quick test_tag_and;
     test_case "Tag a <=" `Quick test_tag_lte;
@@ -518,6 +541,7 @@ let ocaml_tests = [
     test_case "compile a bool" `Quick test_compile_bool;
     test_case "compile a add1" `Quick test_compile_add1;
     test_case "compile a sub1" `Quick test_compile_sub1;
+    test_case "compile a not" `Quick test_compile_not;
     test_case "compile a +" `Quick test_compile_add;
     test_case "compile a &&" `Quick test_compile_and;
     test_case "compile a let" `Quick test_compile_let;

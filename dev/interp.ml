@@ -28,6 +28,12 @@ let liftIIB : (int64 -> int64 -> bool) -> value -> value -> value =
     match e1, e2 with
     | NumV n1, NumV n2 -> BoolV (op n1 n2)
     | _ -> failwith "runtime type error"
+  
+let liftBB : (bool -> bool) -> value -> value =
+  fun op e ->
+    match e with
+    | BoolV b -> BoolV (op b)
+    | _ -> failwith "runtime type error"
 
 (* Environment *)
 type env = (string * value) list
@@ -51,8 +57,9 @@ let rec interp expr env =
       sub1 correct
     *)
     (match op with
-    | Add1 -> liftIII ( Int64.add )
-    | Sub1 -> liftIII ( Int64.sub )) (interp e env) (NumV 1L)
+    | Add1 -> liftIII ( Int64.add ) (interp e env) (NumV 1L) (* due to Not being way different, we opted for duplicating a bit of code *)
+    | Sub1 -> liftIII ( Int64.sub ) (interp e env) (NumV 1L)
+    | Not -> liftBB ( not ) (interp e env))
   | Prim2 (op, e1, e2) -> 
     (match op with
     | Add -> liftIII ( Int64.add ) 
