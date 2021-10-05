@@ -211,7 +211,9 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) : inst
                           
   (*| _ -> failwith "TO BE DONE!"*)
 
-let compile e : string =
+
+let compile_prog p : string =
+  let _, e = p in
   let tagged = tag e in
   let instrs = compile_expr tagged empty_slot_env 1L in
   let prelude ="

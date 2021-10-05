@@ -2,7 +2,10 @@
 open Printf
 
 (* primitive operators *)
-type prim1 = Add1 | Sub1 | Not
+type prim1 = Add1 | Sub1 | Not | Print 
+(* 
+type prim1 = Add1 | Sub1 
+| Print comment out this line if providing print via the sys interface *)
 type prim2 = Add | And | Lte 
 
 (* Algebraic datatype for expressions *)
@@ -14,8 +17,28 @@ type expr =
   | Id of string
   | Let of string * expr * expr
   | If of expr * expr * expr
+  | Apply of string * expr list
 
-(* Pretty printing - used by testing framework *)
+(* C function argument types *)
+type ctype =
+  | CAny
+  | CInt
+  | CBool
+
+(* Function definitions *)
+type fundef =
+  | DefFun of string * string list * expr
+  | DefSys of string * ctype list * ctype
+
+let fundef_name(f : fundef) : string =
+  match f with
+  | DefFun (n, _, _) -> n
+  | DefSys (n, _, _) -> n
+
+(* Program including definitions and a body *)
+type prog = fundef list * expr
+
+(* Pretty printing expressions - used by testing framework *)
 let rec string_of_expr(e : expr) : string = 
   match e with
   | Num n -> Int64.to_string n
@@ -26,10 +49,33 @@ let rec string_of_expr(e : expr) : string =
     | Add1 -> "add1"
     | Sub1 -> "sub1"
     | Not -> "not") (string_of_expr e)
+    | Print -> "print") (string_of_expr e) (* remove the print case when providing the sys interface *)
   | Prim2 (op, e1, e2) -> sprintf "(%s %s %s)" 
     (match op with 
     | Add -> "+"
-    | And -> "&&"
+    | And -> "and"
     | Lte -> "<=") (string_of_expr e1) (string_of_expr e2)
   | Let (x, e1, e2) -> sprintf "(let (%s %s) %s)" x (string_of_expr e1) (string_of_expr e2) 
   | If (e1, e2, e3) -> sprintf "(if %s %s %s)" (string_of_expr e1) (string_of_expr e2) (string_of_expr e3)
+  | Apply (fe, ael) -> sprintf "(%s %s)" fe (String.concat " " (List.map string_of_expr ael))
+
+
+(** functions below are not used, would be used if testing the parser on defs **)
+
+(* Pretty printing C types - used by testing framework *)
+let string_of_ctype(t : ctype) : string =
+match t with
+| CAny -> "any"
+| CInt -> "int"
+| CBool -> "bool"
+
+(* Pretty printing function definitions - used by testing framework *)
+let string_of_fundef(d : fundef) : string =
+  match d with
+  | DefFun (name, arg_ids, body) -> sprintf "(def (%s %s) %s)" name (String.concat " " arg_ids) (string_of_expr body)
+  | DefSys (name, arg_types, ret_type) -> sprintf "(defsys %s %s -> %s)" name (String.concat " " (List.map string_of_ctype arg_types)) (string_of_ctype ret_type)
+
+(* Pretty printing a program - used by testing framework *)
+let string_of_prog(p : prog) : string =
+  let fundefs, body = p in
+  String.concat "\n" ((List.map string_of_fundef fundefs) @ [string_of_expr body])
