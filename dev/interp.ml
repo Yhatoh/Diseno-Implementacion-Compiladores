@@ -97,7 +97,7 @@ let rec interp expr env fenv =
     match op with
     | Add1 -> liftIII ( Int64.add ) (interp e env fenv) (NumV 1L)
     | Sub1 -> liftIII ( Int64.sub ) (interp e env fenv) (NumV 1L)
-    | Not -> liftBB ( not ) (interp e env)
+    | Not -> liftBB ( not ) (interp e env fenv)
     | Print -> (interp (Apply ("print", [e])) env fenv)) (* re-route interp of print to the fake sys interface *)
   | Prim2 (op, e1, e2) -> 
     (match op with

@@ -48,7 +48,7 @@ let rec string_of_expr(e : expr) : string =
     (match op with
     | Add1 -> "add1"
     | Sub1 -> "sub1"
-    | Not -> "not") (string_of_expr e)
+    | Not -> "not"
     | Print -> "print") (string_of_expr e) (* remove the print case when providing the sys interface *)
   | Prim2 (op, e1, e2) -> sprintf "(%s %s %s)" 
     (match op with 

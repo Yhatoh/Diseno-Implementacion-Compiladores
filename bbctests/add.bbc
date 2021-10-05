@@ -3,4 +3,4 @@ DESCRIPTION: add two numbers
 SRC:
 (+ 20 2)
 EXPECTED:
-|INTERPRET
+|ORACLE
