@@ -1,17 +1,7 @@
 open Ast
 open Asm
 open Printf
-
-(* Environment *)
-type slot_env = (string * int64) list
-let empty_slot_env : slot_env = []
-let extend_slot_env : string -> int64 -> slot_env -> slot_env =
-  fun x v slot_env -> (x, v) :: slot_env
-
-let rec slot_env_lookup (var : string) (slot_env : slot_env) : int64 =
-  match slot_env with
-  | [] -> failwith "Unbound identifier."
-  | (n, slot) :: rest -> if n = var then slot else (slot_env_lookup var rest)
+open Regsandstack
 
 let bool_to_int (b : bool) : int64 =
   if b then 3L else 1L
@@ -33,6 +23,9 @@ let iAdd_arg_const (arg1 : arg) (n : int64) : instruction = IAdd (arg1, const_fa
 let iAnd_arg_arg (arg1 : arg) (arg2 : arg) : instruction = IAnd (arg1, arg2)
 let iAnd_arg_const (arg1 : arg) (n : int64) : instruction = IAnd (arg1, const_factory n)
 
+let iXor_arg_arg (arg1 : arg) (arg2 : arg) : instruction = IXor (arg1, arg2)
+let iXor_arg_const (arg1 : arg) (n : int64) : instruction = IXor (arg1, const_factory n)
+
 let iSub_arg_arg (arg1 : arg) (arg2 : arg) : instruction = ISub (arg1, arg2)
 let iSub_arg_const (arg1 : arg) (n : int64) : instruction = ISub (arg1, const_factory n)
 
@@ -43,8 +36,27 @@ let iNot_arg (a : arg) : instruction = INot a
 
 let i_jmp (label : string) : instruction = IJmp label
 let i_je (label : string) : instruction = IJe label
+let i_jne (label : string) : instruction = IJne label
 let i_jg (label : string) : instruction = IJg label
 let i_label (label : string) : instruction = ILabel label
+
+let check_rax_is_type_instr (tp : int64) (slot : int64) : instruction list =
+  (*[move rax stackptr, and stackptr type, move rax stackptr + 1, move rax stackptr, cmp stackptr + 1 type, jne error]*)
+  let label = if tp = 0L then "error_not_number" else "error_not_boolean" in
+  [
+    iMov_arg_arg (rsp_pointer slot) rax;
+    iAnd_arg_const rax 1L;
+    (*iMov_arg_arg (rsp_pointer (Int64.add slot 1L)) rax;*)
+    iCmp_arg_const rax tp;
+    iMov_arg_to_RAX (rsp_pointer slot);
+    i_jne label
+  ]
+
+let type_of_unops (operation : prim1) (slot : int64) : instruction list =
+  match operation with
+  | Add1 | Sub1 -> check_rax_is_type_instr 0L slot
+  | Not -> check_rax_is_type_instr 1L slot
+  | Print -> []
 
 
 let compile_lte (rax: arg) (rsp_ptr: arg) (tag : int) : instruction list = 
@@ -81,11 +93,14 @@ let unop_to_instr_list (op: prim1) : instruction list =
   let iAdd1_arg_list (a : arg) : instruction list = [iAdd_arg_const a 2L] in
   let iSub1_arg_list (a : arg) : instruction list = [iSub_arg_const a 2L] in
   let iNot_arg_list (a : arg) : instruction list = [iNot_arg a ; iAdd_arg_const a 1L] in
+  let iPrint_arg_list (a : arg) : instruction list =
+    (store_first_6_args) @ [move_arg_1_to_6 1 a ; ICall "print"] @ (pop_first_6_args) in
   let builder =
     match op with
     | Add1 -> iAdd1_arg_list
     | Sub1 -> iSub1_arg_list
     | Not -> iNot_arg_list
+    | Print -> iPrint_arg_list
   in
   builder rax
 
@@ -136,7 +151,8 @@ let rec string_of_tag_expr(e : tag texpr) : string =
     (match op with
     | Add1 -> "add1"
     | Sub1 -> "sub1"
-    | Not -> "not") (string_of_tag_expr e)
+    | Not -> "not"
+    | Print -> "print") (string_of_tag_expr e)
   | TPrim2 (op, e1, e2, tag) -> sprintf "(tag_%d %s %s %s)" tag 
     (match op with 
     | Add -> "+"
@@ -159,7 +175,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) : inst
   let mov_rax_to_rsp = iMov_arg_arg rsp_ptr rax in
   let compile_prim1 (op: prim1) (n: tag texpr) : instruction list =
     let compiled_n = (compile_expr n slot_env slot) in
-    (compiled_n)@ unop_to_instr_list op
+    (compiled_n) @ (type_of_unops op slot) @ (unop_to_instr_list op)
   in
   let compile_prim2 (op : prim2) (n1 : tag texpr) (n2 : tag texpr) (tag : int) : instruction list =
     let compile_e (n : tag texpr) (slot : int64): instruction list = compile_expr n slot_env slot in
@@ -218,6 +234,20 @@ let compile_prog p : string =
   let instrs = compile_expr tagged empty_slot_env 1L in
   let prelude ="
 section .text
+extern print
+extern typeError
 global our_code_starts_here
+error_not_number:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x1
+  call typeError
+error_not_boolean:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x2
+  call typeError
 our_code_starts_here:" in
   prelude ^ pp_instrs (instrs @ [ IRet ])
