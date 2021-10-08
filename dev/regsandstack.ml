@@ -12,6 +12,26 @@ let rec slot_env_lookup (var : string) (slot_env : slot_env) : int64 =
   | (n, slot) :: rest -> if n = var then slot else (slot_env_lookup var rest)
 
 
+(* Function Environment *)
+type comp_fenv = comp_fun list
+let empty_comp_fenv : comp_fenv = []
+let rec lookup_comp_fenv : string -> int -> comp_fenv -> comp_fun =
+  fun s total_args fenv -> 
+    match fenv with
+    | [] -> raise (RTError (Printf.sprintf "Undefined function: %s" s))
+    | ((f_name, f_args)::fs) -> if (f_name = s) then
+                                  (if (length f_args) = total_args then
+                                    (f_name, f_args)
+                                  else (failwith "Expected a total of %d parameters for %s, but got %d" (length f_args) s (total_args)))
+                                else lookup_comp_fenv s fs
+
+let extend_slot_env : string -> string list -> comp_env -> comp_env =
+  fun x v comp_env -> (x, v) :: comp_env
+
+
+type comp_fun = string * string list
+
+
 let int_to_cc64_reg (n : int) : reg =
   match n with
   | 1 -> RDI

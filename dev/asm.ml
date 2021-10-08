@@ -4,6 +4,7 @@ open Printf
 type reg = 
 | RAX
 | RSP
+| RBP
 | RDI
 | RSI
 | RDX
