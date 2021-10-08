@@ -83,9 +83,9 @@ let function_end : instruction list =
     IRet
   ]
 
-let compile_lte (rax: arg) (rsp_ptr: arg) (tag : int) : instruction list = 
-  let else_label = sprintf "if_false_%d" tag in
-  let done_label = sprintf "done_%d" tag in
+let compile_lte (rax: arg) (rsp_ptr: arg) (tag : int) (tag_fun : int): instruction list = 
+  let else_label = sprintf "if_false_%d_%d" tag_fun tag in
+  let done_label = sprintf "done_%d_%d" tag_fun tag in
   let iMov_bool_to_rax (b : bool) = iMov_arg_const rax (bool_to_int b) in
   [iCmp_arg_arg rax rsp_ptr;
    i_jg else_label;
@@ -95,14 +95,14 @@ let compile_lte (rax: arg) (rsp_ptr: arg) (tag : int) : instruction list =
    iMov_bool_to_rax false; 
    i_label done_label]
 
-let binop_to_instr (op : prim2) (slot : int64) (tag : int) : instruction list =
+let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : instruction list =
   let rsp_ptr = rsp_pointer slot in
   let as_list (fn : (arg -> arg -> instruction)) : (arg -> arg -> instruction list) =
     let ret_fn (arg1 : arg) (arg2 : arg) : instruction list = [fn arg1 arg2] in
     ret_fn
   in
   let compile_lte_with_tag (rax : arg) (rsp_ptr : arg) : instruction list =
-    compile_lte rax rsp_ptr tag
+    compile_lte rax rsp_ptr tag tag_fun
   in
   let builder =
     match op with
@@ -233,7 +233,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
       @ compiled_e2  
       @ [iMov_arg_arg (rsp_pointer next_slot) rax]
       @ [iMov_arg_arg rax rsp_ptr]
-      @ (binop_to_instr op next_slot tag)
+      @ (binop_to_instr op next_slot tag tag_fun)
     in
     compiled_e1
     @ (begin match op with
