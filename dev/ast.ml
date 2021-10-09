@@ -6,7 +6,7 @@ type prim1 = Add1 | Sub1 | Not | Print
 (* 
 type prim1 = Add1 | Sub1 
 | Print comment out this line if providing print via the sys interface *)
-type prim2 = Add | And | Lte 
+type prim2 = Add | Sub | Mul | And | Lte 
 
 (* Algebraic datatype for expressions *)
 type expr = 
@@ -54,6 +54,8 @@ let rec string_of_expr(e : expr) : string =
   | Prim2 (op, e1, e2) -> sprintf "(%s %s %s)" 
     (match op with 
     | Add -> "+"
+    | Sub -> "-"
+    | Mul -> "*"
     | And -> "and"
     | Lte -> "<=") (string_of_expr e1) (string_of_expr e2)
   | Let (x, e1, e2) -> sprintf "(let (%s %s) %s)" x (string_of_expr e1) (string_of_expr e2) 

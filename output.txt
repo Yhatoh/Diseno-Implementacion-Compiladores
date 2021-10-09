@@ -1,0 +1,97 @@
+dune exec execs/run_compile.exe examples/test.src
+
+section .text
+extern print
+extern typeError
+global our_code_starts_here
+our_code_starts_here:
+  sub RSP, 0x8
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, 0x2
+  mov RDI, RAX
+  call g
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  add RSP, 0x8
+  ret
+f:
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x10
+  mov RAX, 0x2
+  mov [RBP - 8], RAX
+  and RAX, 0x1
+  cmp RAX, 0
+  mov RAX, [RBP - 8]
+  jne error_not_number
+  mov [RBP - 8], RAX
+  mov RAX, RDI
+  mov [RBP - 16], RAX
+  and RAX, 0x1
+  cmp RAX, 0
+  mov RAX, [RBP - 16]
+  jne error_not_number
+  mov [RBP - 16], RAX
+  mov RAX, [RBP - 8]
+  add RAX, [RBP - 16]
+  mov RSP, RBP
+  pop RBP
+  ret
+g:
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x10
+  mov RAX, 0x2
+  mov [RBP - 8], RAX
+  and RAX, 0x1
+  cmp RAX, 0
+  mov RAX, [RBP - 8]
+  jne error_not_number
+  mov [RBP - 8], RAX
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, RDI
+  mov RDI, RAX
+  call f
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  mov [RBP - 16], RAX
+  and RAX, 0x1
+  cmp RAX, 0
+  mov RAX, [RBP - 16]
+  jne error_not_number
+  mov [RBP - 16], RAX
+  mov RAX, [RBP - 8]
+  add RAX, [RBP - 16]
+  mov RSP, RBP
+  pop RBP
+  ret
+error_not_number:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x1
+  call typeError
+error_not_boolean:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x2
+  call typeError

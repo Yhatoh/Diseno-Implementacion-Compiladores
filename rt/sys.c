@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-typedef uint64_t u64;
+typedef int64_t u64;
 
 extern u64 our_code_starts_here() asm("our_code_starts_here");
 
@@ -40,10 +40,9 @@ void typeError(u64 type, u64 givenValue) {
 
 int main(int argc, char** argv) {
   u64 result = our_code_starts_here();
-  //printf("%" PRId64 "\n", result);
 
   u64 check = result & 1LL;
-  result >>= 1;
+  result /= 2;
   if(check){
     if(result & 1LL){
       printf("true\n");

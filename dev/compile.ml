@@ -68,7 +68,7 @@ let type_of_unops (operation : prim1) (slot : int64) : instruction list =
 
 let type_of_binops (operation : prim2) (slot : int64) : instruction list =
   match operation with
-  | Add | Lte -> check_rax_is_int_instr slot
+  | Add | Sub | Lte -> check_rax_is_int_instr slot
   | And -> check_rax_is_bool_instr slot
 
 let function_start (n_local_vars : int64) : instruction list =
@@ -109,6 +109,7 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
   let builder =
     match op with
     | Add -> as_list iAdd_arg_arg
+    | Sub -> as_list iSub_arg_arg
     | And -> as_list iAnd_arg_arg
     | Lte -> compile_lte_with_tag
   in
@@ -194,10 +195,10 @@ let tag_prog (prog : prog) : tag tfun_def list * tag texpr =
 let rec count_lets (e : tag texpr) : int64 =
   match e with
   | TLet (_, _, e_let, _) -> (Int64.add 1L (count_lets e_let))
-  | TPrim1 (_, n, _) -> (count_lets n)
-  | TPrim2 (_, e1, e2, _) -> (max (count_lets e1) (count_lets e2))
-  | TIf (cond, thn, els, _) -> (max (max (count_lets cond) (count_lets thn)) (count_lets els))
-  | TApply _ | TId _ | TBool _ | TNum _ -> 0L
+  | TPrim1 (_, n, _) -> (Int64.add 1L (count_lets n)
+  )  | TPrim2 (_, e1, e2, _) -> (Int64.add 1L (max (count_lets e1) (count_lets e2)))
+  | TIf (cond, thn, els, _) -> (Int64.add 1L (max (max (count_lets cond) (count_lets thn)) (count_lets els)))
+  | TApply _ | TId _ | TBool _ | TNum _ -> 1L
 
 (* Pretty printing - used by testing framework *)
 let rec string_of_tag_expr(e : tag texpr) : string = 
@@ -214,6 +215,8 @@ let rec string_of_tag_expr(e : tag texpr) : string =
   | TPrim2 (op, e1, e2, tag) -> sprintf "(tag_%d %s %s %s)" tag 
     (match op with 
     | Add -> "+"
+    | Sub -> "-"
+    | Mul -> "*"
     | And -> "&&"
     | Lte -> "<=") (string_of_tag_expr e1) (string_of_tag_expr e2)
   | TLet (x, e1, e2, tag) -> sprintf "(tag_%d let (%s %s) %s)" tag x (string_of_tag_expr e1) (string_of_tag_expr e2) 
@@ -251,8 +254,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     compiled_e1
     @ (begin match op with
         | And -> binop_boolean_to_instr_list second_part tag false
-        | Add -> second_part
-        | Lte -> second_part
+        | Add | Sub | Lte -> second_part
       end)
   in
   let compile_let (x : string) (v : tag texpr) (e : tag texpr) : instruction list =
@@ -284,7 +286,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
                      else (Reg (int_to_cc64_reg (Int64.to_int pos_stack))) 
     in
     [iMov_arg_to_RAX (search_var)]
-  | TNum (n, _) -> [iMov_const_to_RAX (Int64.shift_left n 1)]
+  | TNum (n, _) -> [iMov_const_to_RAX (Int64.mul n 2L)]
   | TBool (b, _) -> [iMov_const_to_RAX (bool_to_int b)]
   | TPrim1 (op, n, _) -> compile_prim1 op n
   | TLet (x, v, e, _) -> compile_let x v e
@@ -312,9 +314,6 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     @ [ICall nm] 
     @ if largs > 6 then [(iAdd_arg_const (Reg RSP) (Int64.of_int (8 * (largs - 6))))] else []
     @ (pop_first_6_args)
-
-
-                          
   (*| _ -> failwith "TO BE DONE!"*)
 
 let rec compile_funcs (func_list : tag tfun_def list) (cfenv : comp_fenv) : instruction list * comp_fenv =
@@ -339,7 +338,7 @@ let compile_prog p : string =
   let (tagged_funcs, tagged_main) = tag_prog p in
   let (intrs_funs, cfenv)  = (compile_funcs tagged_funcs empty_comp_fenv) in 
   let n_lets_main = count_lets tagged_main in
-  let instrs_main = [iSub_arg_const (Reg RSP) (Int64.mul 8L n_lets_main)] @ compile_expr tagged_main empty_slot_env Int64.minus_one cfenv 0 0 @ [iAdd_arg_const (Reg RSP) (Int64.mul 8L n_lets_main)] in
+  let instrs_main = function_start n_lets_main @ compile_expr tagged_main empty_slot_env Int64.minus_one cfenv 0 0 @ function_end in
   let prelude ="
 section .text
 extern print

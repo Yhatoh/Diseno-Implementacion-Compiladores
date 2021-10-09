@@ -27,6 +27,8 @@ let rec parse_exp (sexp : sexp) : expr =
       | `List [`Atom id; e] -> Let (id, parse_exp e, parse_exp e2)
       | _ -> raise (CTError (sprintf "Not a valid let assignment: %s" (to_string e1))) )
     | `Atom "+" -> Prim2 (Add, parse_exp e1, parse_exp e2)
+    | `Atom "-" -> Prim2 (Sub, parse_exp e1, parse_exp e2)
+    | `Atom "*" -> Prim2 (Sub, parse_exp e1, parse_exp e2)
     | `Atom "and" -> Prim2 (And, parse_exp e1, parse_exp e2)
     | `Atom "<=" -> Prim2 (Lte, parse_exp e1, parse_exp e2)
     | `Atom name -> Apply (name, [parse_exp e1 ; parse_exp e2])
