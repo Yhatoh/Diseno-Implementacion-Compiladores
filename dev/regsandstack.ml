@@ -39,7 +39,7 @@ let int_to_cc64_reg (n : int) : reg =
   | 4 -> RCX
   | 5 -> R8
   | 6 -> R9
-  | _ -> failwith "Argument n out of bounds."
+  | _ -> failwith (sprintf "Argument %d out of bounds." n)
 
 
 let store_arg (n : int) (a : arg) : instruction =
