@@ -42,8 +42,8 @@ let liftBB : (bool -> bool) -> value -> value =
   
 (* Sys functions *)
 let defs_prelude : fundef list = [
-  DefSys ("print", [CAny], CAny) ;
-  DefSys ("max", [CInt ; CInt], CInt) 
+  (*DefSys ("print", [CAny], CAny) ;
+  DefSys ("max", [CInt ; CInt], CInt) *)
 ]
 
 (* Lexical Environment *)
@@ -114,8 +114,8 @@ let rec interp expr env fenv =
     (match lookup_fenv name fenv with
     | DefFun (_, params, body) -> 
       interp body (extend_env params vals env) fenv
-    | DefSys (_, arg_types, ret_type) ->
-      check_type ret_type @@ interp_sys name (List.map2 check_type arg_types vals))
+    (*| DefSys (_, arg_types, ret_type) ->
+      check_type ret_type @@ interp_sys name (List.map2 check_type arg_types vals)*))
 
 let interp_prog prog env =
   let defs, expr = prog in

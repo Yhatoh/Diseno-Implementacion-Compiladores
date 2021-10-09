@@ -28,12 +28,13 @@ type ctype =
 (* Function definitions *)
 type fundef =
   | DefFun of string * string list * expr
-  | DefSys of string * ctype list * ctype
+
+  (*| DefSys of string * ctype list * ctype*)
 
 let fundef_name(f : fundef) : string =
   match f with
   | DefFun (n, _, _) -> n
-  | DefSys (n, _, _) -> n
+(*  | DefSys (n, _, _) -> n *)
 
 (* Program including definitions and a body *)
 type prog = fundef list * expr
@@ -73,7 +74,7 @@ match t with
 let string_of_fundef(d : fundef) : string =
   match d with
   | DefFun (name, arg_ids, body) -> sprintf "(def (%s %s) %s)" name (String.concat " " arg_ids) (string_of_expr body)
-  | DefSys (name, arg_types, ret_type) -> sprintf "(defsys %s %s -> %s)" name (String.concat " " (List.map string_of_ctype arg_types)) (string_of_ctype ret_type)
+  (*| DefSys (name, arg_types, ret_type) -> sprintf "(defsys %s %s -> %s)" name (String.concat " " (List.map string_of_ctype arg_types)) (string_of_ctype ret_type)*)
 
 (* Pretty printing a program - used by testing framework *)
 let string_of_prog(p : prog) : string =

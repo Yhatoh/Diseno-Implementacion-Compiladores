@@ -25,7 +25,7 @@ let instruction : instruction testable =
 let instruction_list : instruction list testable =
   testable (fun oc e -> Format.fprintf oc "%s" (pp_instrs e)) (=)
 
-let tag_expr : tag texpr testable =
+let tag_expr_t : tag texpr testable =
   testable (fun oc e -> Format.fprintf oc "%s" (string_of_tag_expr e)) (=)
 
 
@@ -194,7 +194,7 @@ let test_interp_compound () =
 let test_constructor_rsp_pointer () =
   check arg "same arg"
     (rsp_pointer 2L)
-    (StackPtr (RSP, 2L))
+    (Ptr (RSP, 2L))
 
 let test_constructor_const () =
   check arg "same arg"
@@ -203,8 +203,8 @@ let test_constructor_const () =
 
 let test_constructor_imov_arg_arg () =
   check instruction "same instruction"
-    (iMov_arg_arg (Reg RAX) (StackPtr(RSP, 2L)))
-    (IMov (Reg RAX, StackPtr(RSP, 2L)))
+    (iMov_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
+    (IMov (Reg RAX, Ptr(RSP, 2L)))
 
 let test_constructor_imov_arg_const () =
   check instruction "same instruction"
@@ -213,8 +213,8 @@ let test_constructor_imov_arg_const () =
 
 let test_constructor_imov_arg_to_RAX () =
   check instruction "same instruction"
-    (iMov_arg_to_RAX (StackPtr(RSP, 2L)))
-    (IMov (Reg RAX, StackPtr(RSP, 2L)))
+    (iMov_arg_to_RAX (Ptr(RSP, 2L)))
+    (IMov (Reg RAX, Ptr(RSP, 2L)))
 
 let test_constructor_imov_const_to_RAX () =
   check instruction "same instruction"
@@ -223,8 +223,8 @@ let test_constructor_imov_const_to_RAX () =
 
 let test_constructor_iadd_arg_arg () =
   check instruction "same instruction"
-    (iAdd_arg_arg (Reg RAX) (StackPtr(RSP, 2L)))
-    (IAdd (Reg RAX, StackPtr(RSP, 2L)))
+    (iAdd_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
+    (IAdd (Reg RAX, Ptr(RSP, 2L)))
 
 let test_constructor_iadd_arg_const () =
   check instruction "same instruction"
@@ -233,8 +233,8 @@ let test_constructor_iadd_arg_const () =
 
 let test_constructor_iand_arg_arg () =
   check instruction "same instruction"
-    (iAnd_arg_arg (Reg RAX) (StackPtr(RSP, 2L)))
-    (IAnd (Reg RAX, StackPtr(RSP, 2L)))
+    (iAnd_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
+    (IAnd (Reg RAX, Ptr(RSP, 2L)))
 
 let test_constructor_iand_arg_const () =
   check instruction "same instruction"
@@ -243,8 +243,8 @@ let test_constructor_iand_arg_const () =
 
 let test_constructor_isub_arg_arg () =
   check instruction "same instruction"
-    (iSub_arg_arg (Reg RAX) (StackPtr(RSP, 2L)))
-    (ISub (Reg RAX, StackPtr(RSP, 2L)))
+    (iSub_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
+    (ISub (Reg RAX, Ptr(RSP, 2L)))
 
 let test_constructor_isub_arg_const () =
   check instruction "same instruction"
@@ -253,8 +253,8 @@ let test_constructor_isub_arg_const () =
 
 let test_constructor_icmp_arg_arg () =
   check instruction "same instruction"
-    (iCmp_arg_arg (Reg RAX) (StackPtr(RSP, 2L)))
-    (ICmp (Reg RAX, StackPtr(RSP, 2L)))
+    (iCmp_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
+    (ICmp (Reg RAX, Ptr(RSP, 2L)))
 
 let test_constructor_icmp_arg_const () =
   check instruction "same instruction"
@@ -304,18 +304,18 @@ let test_unop_to_instr_list_not () =
 
 let test_binop_to_instr_list_add () =
   check instruction_list "same instruction_list"
-    (binop_to_instr Add 3L 1)
-    ([IAdd (Reg RAX, StackPtr(RSP, 3L))])
+    (binop_to_instr Add 3L 1 0)
+    ([IAdd (Reg RAX, Ptr(RSP, 3L))])
 
 let test_binop_to_instr_list_and () =
   check instruction_list "same instruction_list"
-    (binop_to_instr And 3L 1)
-    ([IAnd (Reg RAX, StackPtr(RSP, 3L))])
+    (binop_to_instr And 3L 1 0)
+    ([IAnd (Reg RAX, Ptr(RSP, 3L))])
 
 let test_binop_to_instr_list_lte () =
   check instruction_list "same instruction_list"
-    (binop_to_instr Lte 3L 1)
-    ([ICmp (Reg RAX, StackPtr(RSP, 3L))
+    (binop_to_instr Lte 3L 1 0)
+    ([ICmp (Reg RAX, Ptr(RSP, 3L))
       ; IJg ("if_false_1")
       ; IMov (Reg RAX, Const 3L)
       ; IJmp ("done_1")
@@ -325,24 +325,24 @@ let test_binop_to_instr_list_lte () =
 
 let test_binop_boolean_to_instr_list_and () = 
   check instruction_list "same instruction_list"
-    (binop_boolean_to_instr_list [IMov (StackPtr (RSP, 1L), Reg RAX); 
-                                  IAnd (Reg RAX, StackPtr(RSP, 3L)); 
-                                  IMov (StackPtr (RSP, 2L), Reg RAX);
-                                  IMov (Reg RAX, StackPtr (RSP, 1L));
-                                  IAnd (Reg RAX, StackPtr(RSP, 2L))] 1 false)
+    (binop_boolean_to_instr_list [IMov (Ptr (RSP, 1L), Reg RAX); 
+                                  IAnd (Reg RAX, Ptr(RSP, 3L)); 
+                                  IMov (Ptr (RSP, 2L), Reg RAX);
+                                  IMov (Reg RAX, Ptr (RSP, 1L));
+                                  IAnd (Reg RAX, Ptr(RSP, 2L))] 1 false)
     ([ICmp (Reg RAX, Const 1L); 
       IJe ("skip_1");
-      IMov (StackPtr (RSP, 1L), Reg RAX); 
-      IAnd (Reg RAX, StackPtr(RSP, 3L)); 
-      IMov (StackPtr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 1L));
-      IAnd (Reg RAX, StackPtr(RSP, 2L));
+      IMov (Ptr (RSP, 1L), Reg RAX); 
+      IAnd (Reg RAX, Ptr(RSP, 3L)); 
+      IMov (Ptr (RSP, 2L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 1L));
+      IAnd (Reg RAX, Ptr(RSP, 2L));
       ILabel ("skip_1")])
 
 let test_lte_op_to_instr_list () =
   check instruction_list "same instruction_list"
-    (compile_lte (Reg RAX) (StackPtr (RSP, 3L)) (1))
-    ([ICmp (Reg RAX, StackPtr(RSP, 3L))
+    (compile_lte (Reg RAX) (Ptr (RSP, 3L)) (1) 0)
+    ([ICmp (Reg RAX, Ptr(RSP, 3L))
       ; IJg ("if_false_1")
       ; IMov (Reg RAX, Const 3L)
       ; IJmp ("done_1")
@@ -352,58 +352,58 @@ let test_lte_op_to_instr_list () =
 
 (* Test for our [tag] function *)
 let test_tag_num () = 
-  check tag_expr "same tag_expr"
-    (tag (Num 1L))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Num 1L))
     (TNum (1L, 1))
 
 let test_tag_bool () = 
-  check tag_expr "same tag_expr"
-    (tag (Bool true))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Bool true))
     (TBool (true, 1))
 
 let test_tag_id () = 
-  check tag_expr "same tag_expr"
-    (tag (Id "x"))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Id "x"))
     (TId ("x", 1))
 
 let test_tag_add1 () = 
-  check tag_expr "same tag_expr"
-    (tag (Prim1 (Add1, Num 1L)))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Prim1 (Add1, Num 1L)))
     (TPrim1 (Add1, (TNum (1L, 2)), 1))
 
 let test_tag_sub1 () = 
-  check tag_expr "same tag_expr"
-    (tag (Prim1 (Sub1, Num 1L)))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Prim1 (Sub1, Num 1L)))
     (TPrim1 (Sub1, (TNum (1L, 2)), 1))
 
 let test_tag_not () = 
-  check tag_expr "same tag_expr"
-    (tag (Prim1 (Not, Bool true)))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Prim1 (Not, Bool true)))
     (TPrim1 (Not, (TBool (true, 2)), 1))
 
 let test_tag_add () = 
-  check tag_expr "same tag_expr"
-    (tag (Prim2 (Add, Num 4L, Num 2L)))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Prim2 (Add, Num 4L, Num 2L)))
     (TPrim2 (Add, (TNum (4L, 2)), (TNum (2L, 3)), 1))
 
 let test_tag_and () = 
-  check tag_expr "same tag_expr"
-    (tag (Prim2 (And, Bool true, Bool true)))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Prim2 (And, Bool true, Bool true)))
     (TPrim2 (And, (TBool (true, 2)), (TBool (true, 3)), 1))
 
 let test_tag_lte () = 
-  check tag_expr "same tag_expr"
-    (tag (Prim2 (Lte, Num 4L, Num 2L)))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Prim2 (Lte, Num 4L, Num 2L)))
     (TPrim2 (Lte, (TNum (4L, 2)), (TNum (2L, 3)), 1))
 
 let test_tag_let () = 
-  check tag_expr "same tag_expr"
-    (tag (Let ("x", Num 4L, Prim2 (Add, Id "x", Num 2L))))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Let ("x", Num 4L, Prim2 (Add, Id "x", Num 2L))))
     (TLet ("x", (TNum (4L, 2)), TPrim2 (Add, (TId ("x", 4)), (TNum (2L, 5)), 3), 1))
 
 let test_tag_if () = 
-  check tag_expr "same tag_expr"
-    (tag (If (Bool true, Num 4L, Prim2 (Add, Id "x", Num 2L))))
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (If (Bool true, Num 4L, Prim2 (Add, Id "x", Num 2L))))
     (TIf 
       ((TBool (true, 2)), 
         (TNum (4L, 3)), 
@@ -411,8 +411,8 @@ let test_tag_if () =
       1))
 
 let test_tag_compound () = 
-  check tag_expr "same tag_expr"
-    (tag (Let 
+  check tag_expr_t "same tag_expr_t"
+    (tag_expr (Let 
           (("x"), (Bool true), 
            (Let 
             (("y"), (Num 10L), 
@@ -449,63 +449,63 @@ let test_tag_compound () =
 (* Test our [compile expr] function *)
 let test_compile_num () = 
   check instruction_list "same instruction_list"
-    (compile_expr (TNum (1L, 1)) empty_slot_env 1L)
+    (compile_expr (TNum (1L, 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 2L)])
 
 let test_compile_bool () = 
   check instruction_list "same instruction_list"
-    (compile_expr (TBool (true, 1)) empty_slot_env 1L)
+    (compile_expr (TBool (true, 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 3L)])
 
 let test_compile_add1 () = 
   check instruction_list "same instruction_list"
-    (compile_expr (TPrim1 (Add1, (TNum (1L, 2)), 1)) empty_slot_env 1L)
+    (compile_expr (TPrim1 (Add1, (TNum (1L, 2)), 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 2L); IAdd (Reg RAX, Const 2L)])
 
 let test_compile_sub1 () = 
   check instruction_list "same instruction_list"
-    (compile_expr (TPrim1 (Sub1, (TNum (1L, 2)), 1)) empty_slot_env 1L)
+    (compile_expr (TPrim1 (Sub1, (TNum (1L, 2)), 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 2L); ISub (Reg RAX, Const 2L)])
 
 let test_compile_not () = 
   check instruction_list "same instruction_list"
-    (compile_expr (TPrim1 (Not, (TBool (false, 2)), 1)) empty_slot_env 1L)
+    (compile_expr (TPrim1 (Not, (TBool (false, 2)), 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 1L); INot (Reg RAX) ; IAdd (Reg RAX, Const 1L)])
 
 let test_compile_add () = 
   check instruction_list "same instruction_list"
-    (compile_expr (TPrim2 (Add, (TNum (4L, 2)), (TNum (2L, 3)), 1)) empty_slot_env 1L)
+    (compile_expr (TPrim2 (Add, (TNum (4L, 2)), (TNum (2L, 3)), 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 8L); 
-      IMov (StackPtr (RSP, 1L), Reg RAX); 
+      IMov (Ptr (RSP, 1L), Reg RAX); 
       IMov (Reg RAX, Const 4L) ; 
-      IMov (StackPtr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 1L));
-      IAdd (Reg RAX, StackPtr (RSP, 2L));
+      IMov (Ptr (RSP, 2L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 1L));
+      IAdd (Reg RAX, Ptr (RSP, 2L));
      ])
 
 let test_compile_and () = 
   check instruction_list "same instruction_list"
-    (compile_expr (TPrim2 (And, (TBool (true, 2)), (TBool (true, 3)), 1)) empty_slot_env 1L)
+    (compile_expr (TPrim2 (And, (TBool (true, 2)), (TBool (true, 3)), 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 3L); 
       ICmp (Reg RAX, Const 1L);
       IJe ("skip_1");
-      IMov (StackPtr (RSP, 1L), Reg RAX); 
+      IMov (Ptr (RSP, 1L), Reg RAX); 
       IMov (Reg RAX, Const 3L) ; 
-      IMov (StackPtr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 1L));
-      IAnd (Reg RAX, StackPtr (RSP, 2L));
+      IMov (Ptr (RSP, 2L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 1L));
+      IAnd (Reg RAX, Ptr (RSP, 2L));
       ILabel ("skip_1")
      ])
 
 let test_compile_lte () = 
   check instruction_list "same instruction_list"
-    (compile_expr (TPrim2 (Lte, (TNum (4L, 2)), (TNum (2L, 3)), 1)) empty_slot_env 1L)
+    (compile_expr (TPrim2 (Lte, (TNum (4L, 2)), (TNum (2L, 3)), 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 3L); 
-      IMov (StackPtr (RSP, 1L), Reg RAX); 
+      IMov (Ptr (RSP, 1L), Reg RAX); 
       IMov (Reg RAX, Const 3L) ; 
-      IMov (StackPtr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 1L));
-      ICmp (Reg RAX, StackPtr (RSP, 2L));
+      IMov (Ptr (RSP, 2L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 1L));
+      ICmp (Reg RAX, Ptr (RSP, 2L));
       IJg ("if_else_1");
       IMov (Reg RAX, Const 3L);
       IJmp ("done_1");
@@ -516,15 +516,15 @@ let test_compile_lte () =
 
 let test_compile_let () = 
   check instruction_list "same instruction_list"
-    (compile_expr (TLet ("x", (TNum (4L, 2)), TPrim2 (Add, (TId ("x", 4)), (TNum (2L, 5)), 3), 1)) empty_slot_env 1L)
+    (compile_expr (TLet ("x", (TNum (4L, 2)), TPrim2 (Add, (TId ("x", 4)), (TNum (2L, 5)), 3), 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 8L);
-      IMov (StackPtr (RSP, 1L), Reg RAX);
-      IMov (Reg RAX, StackPtr(RSP, 1L));
-      IMov (StackPtr (RSP, 2L), Reg RAX); 
+      IMov (Ptr (RSP, 1L), Reg RAX);
+      IMov (Reg RAX, Ptr(RSP, 1L));
+      IMov (Ptr (RSP, 2L), Reg RAX); 
       IMov (Reg RAX, Const 4L) ; 
-      IMov (StackPtr (RSP, 3L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 2L)); 
-      IAdd (Reg RAX, StackPtr (RSP, 3L));
+      IMov (Ptr (RSP, 3L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 2L)); 
+      IAdd (Reg RAX, Ptr (RSP, 3L));
      ])
 
 let test_compile_if () = 
@@ -536,7 +536,7 @@ let test_compile_if () =
           (TPrim2 (Add, (TNum (4L, 2)), (TNum (2L, 3)), 1)), 
           1)
         )
-      empty_slot_env 1L
+      empty_slot_env Int64.minus_one [] 0 0
     )
     ([IMov (Reg RAX, Const 3L);
       ICmp (Reg RAX, Const 1L);
@@ -545,11 +545,11 @@ let test_compile_if () =
       IJmp ("done_1");
       ILabel ("if_false_1");
       IMov (Reg RAX, Const 8L); 
-      IMov (StackPtr (RSP, 1L), Reg RAX); 
+      IMov (Ptr (RSP, 1L), Reg RAX); 
       IMov (Reg RAX, Const 4L) ; 
-      IMov (StackPtr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 1L));
-      IAdd (Reg RAX, StackPtr (RSP, 2L));
+      IMov (Ptr (RSP, 2L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 1L));
+      IAdd (Reg RAX, Ptr (RSP, 2L));
       ILabel ("done_1");
      ])
 
@@ -576,17 +576,17 @@ let test_compile_compound () =
              (TBool (true, 12)), 
              5)),
           3)), 
-        1)) empty_slot_env 1L)
+        1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 3L);
-      IMov (StackPtr(RSP, 1L), Reg RAX);
+      IMov (Ptr(RSP, 1L), Reg RAX);
       IMov (Reg RAX, Const 20L);
-      IMov (StackPtr(RSP, 2L), Reg RAX);
+      IMov (Ptr(RSP, 2L), Reg RAX);
       IMov (Reg RAX, Const 40L);
-      IMov (StackPtr(RSP, 3L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 1L));
-      IMov (StackPtr(RSP, 4L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 3L));
-      ICmp (Reg RAX, StackPtr (RSP, 4L));
+      IMov (Ptr(RSP, 3L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 1L));
+      IMov (Ptr(RSP, 4L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 3L));
+      ICmp (Reg RAX, Ptr (RSP, 4L));
       IJg ("if_false_7");
       IMov (Reg RAX, Const 3L);
       IJmp ("done_7");
@@ -595,11 +595,11 @@ let test_compile_compound () =
       ILabel ("done_7");
       ICmp (Reg RAX, Const 1L);
       IJe ("skip_6");
-      IMov (StackPtr(RSP, 3L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 1L));
-      IMov (StackPtr (RSP, 4L), Reg RAX);
-      IMov (Reg RAX, StackPtr (RSP, 3L));
-      IAnd (Reg RAX, StackPtr (RSP, 4L));
+      IMov (Ptr(RSP, 3L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 1L));
+      IMov (Ptr (RSP, 4L), Reg RAX);
+      IMov (Reg RAX, Ptr (RSP, 3L));
+      IAnd (Reg RAX, Ptr (RSP, 4L));
       ILabel ("skip_6");
       ICmp (Reg RAX, Const 1L);
       IJe ("if_false_5");

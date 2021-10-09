@@ -25,7 +25,7 @@ type tag =
 type arg =
 | Const of int64
 | Reg of reg
-| StackPtr of reg * int64
+| Ptr of reg * int64
 
 (* asm instructions *)
 type instruction =
@@ -48,9 +48,13 @@ type instruction =
 | ICall of string
 (* TO BE COMPLETED *)
 
+let pp_int (num : int64) : string =
+  if num >= 0L then (sprintf "+ %Ld" num) else (sprintf "- %Ld" (Int64.mul Int64.minus_one num))
+
 let pp_reg reg : string =
   match reg with
   | RAX -> "RAX"
+  | RBP -> "RBP"
   | RSP -> "RSP"
   | RDI -> "RDI"
   | RSI -> "RSI"
@@ -63,7 +67,7 @@ let pp_arg arg : string =
   match arg with
   | Const n -> sprintf "%#Lx" n
   | Reg r -> pp_reg r
-  | StackPtr (r, n) -> sprintf "[%s - %Ld]" (pp_reg r) (Int64.mul 8L n)
+  | Ptr (r, n) -> sprintf "[%s %s]" (pp_reg r) (pp_int (Int64.mul 8L n))
 
 let pp_instr instr : string =
   match instr with

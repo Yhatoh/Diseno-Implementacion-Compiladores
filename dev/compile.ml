@@ -6,7 +6,9 @@ open Regsandstack
 let bool_to_int (b : bool) : int64 =
   if b then 3L else 1L
 
-let rsp_pointer (slot : int64) : arg = StackPtr (RSP, slot)
+let rsp_pointer (slot : int64) : arg = Ptr (RSP, slot)
+let rbp_pointer (slot : int64) : arg = Ptr (RBP, slot)
+
 let rax = Reg RAX
 
 
@@ -41,7 +43,7 @@ let i_jg (label : string) : instruction = IJg label
 let i_label (label : string) : instruction = ILabel label
 
 let check_rax_is_type_instr (tp : int64) (slot : int64) : instruction list =
-  (*[move rax stackptr, and stackptr type, move rax stackptr + 1, move rax stackptr, cmp stackptr + 1 type, jne error]*)
+  (*[move rax ptr, and ptr type, move rax ptr + 1, move rax ptr, cmp ptr + 1 type, jne error]*)
   let label = if tp = 0L then "error_not_number" else "error_not_boolean" in
   [
     iMov_arg_arg (rsp_pointer slot) rax;
@@ -69,17 +71,17 @@ let type_of_binops (operation : prim2) (slot : int64) : instruction list =
   | Add | Lte -> check_rax_is_int_instr slot
   | And -> check_rax_is_bool_instr slot
 
-let function_start (total_params : int64) : instruction list =
+let function_start (n_local_vars : int64) : instruction list =
   [
     IPush (Reg RBP) ;
     iMov_arg_arg (Reg RBP) (Reg RSP) ;
-    iSub_arg_const (Reg RSP) (Const (Int64.mul 8L total_params))
+    iSub_arg_const (Reg RSP) (n_local_vars)
   ]
 
 let function_end : instruction list =
   [
     iMov_arg_arg (Reg RSP) (Reg RBP) ;
-    IPop (Reg RSP)
+    IPop (Reg RSP);
     IRet
   ]
 
@@ -174,6 +176,7 @@ let tag_expr (e : expr) : tag texpr =
           let (tagged_hd, next_tag1) = help hd (sub_cur + 1) in
           let (tagged_tl, next_tag2) = tag_list tl next_tag1 in
           (tagged_hd :: tagged_tl, next_tag2)
+      in
       let (tagged_args, next_tag) = tag_list args cur in
       (TApply(f_name, tagged_args, cur), next_tag)
   in
@@ -187,6 +190,14 @@ let rec tag_funs (flist : fundef list) (n : int) : tag tfun_def list =
 let tag_prog (prog : prog) : tag tfun_def list * tag texpr = 
   let (funs, main) = prog in
   (tag_funs funs 1, tag_expr main)
+
+let rec count_lets (e : tag texpr) : int64 =
+  match e with
+  | TLet (_, _, e_let, _) -> (Int64.add 1L (count_lets e_let))
+  | TPrim1 (_, n, _) -> (count_lets n)
+  | TPrim2 (_, e1, e2, _) -> (max (count_lets e1) (count_lets e2))
+  | TIf (cond, thn, els, _) -> (max (max (count_lets cond) (count_lets thn)) (count_lets els))
+  | TApply _ | TId _ | TBool _ | TNum _ -> 0L
 
 (* Pretty printing - used by testing framework *)
 let rec string_of_tag_expr(e : tag texpr) : string = 
@@ -207,7 +218,7 @@ let rec string_of_tag_expr(e : tag texpr) : string =
     | Lte -> "<=") (string_of_tag_expr e1) (string_of_tag_expr e2)
   | TLet (x, e1, e2, tag) -> sprintf "(tag_%d let (%s %s) %s)" tag x (string_of_tag_expr e1) (string_of_tag_expr e2) 
   | TIf (e1, e2, e3, tag) -> sprintf "(tag_%d if %s %s %s)" tag (string_of_tag_expr e1) (string_of_tag_expr e2) (string_of_tag_expr e3)
-
+  | TApply (nm, args, tag) -> sprintf "(tag_%d %s (%s))" tag nm (String.concat " " (List.map string_of_tag_expr args)) 
 
 let binop_boolean_to_instr_list (second_part : instruction list) (tag : int) (skip_value : bool) : instruction list =
   let skip_label = sprintf "skip_%d" tag in
@@ -217,7 +228,7 @@ let binop_boolean_to_instr_list (second_part : instruction list) (tag : int) (sk
   @ [i_label skip_label]
 
 let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) : instruction list =
-  let next_slot = (Int64.add slot 1L) in
+  let next_slot = (Int64.sub slot 1L) in
   let rsp_ptr = rsp_pointer slot in
   let mov_rax_to_rsp = iMov_arg_arg rsp_ptr rax in
   let compile_prim1 (op: prim1) (n: tag texpr) : instruction list =
@@ -264,7 +275,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
   in
   
   match e with 
-  | TId (s, _) -> [iMov_arg_to_RAX (rsp_pointer (slot_env_lookup s slot_env))]
+  | TId (s, _) -> [iMov_arg_to_RAX (rbp_pointer (slot_env_lookup s slot_env))]
   | TNum (n, _) -> [iMov_const_to_RAX (Int64.shift_left n 1)]
   | TBool (b, _) -> [iMov_const_to_RAX (bool_to_int b)]
   | TPrim1 (op, n, _) -> compile_prim1 op n
@@ -272,10 +283,27 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
   | TPrim2 (op, n1, n2, tag) -> compile_prim2 op n1 n2 tag
   | TIf(cond, thn, els, tag) -> compile_if cond thn els tag
   | TApply(nm, args, _) -> 
-    let largs = length args in
-    let (_, arg_names) = lookup_comp_fenv nm largs in
-    (*calling convention*)
-    [ICall nm]
+    let largs = List.length args in
+    let (_, _) = lookup_comp_fenv nm largs fenv in
+    let compile_and_push (e : tag texpr) : instruction list =
+      compile_expr e slot_env slot fenv tag_fun total_params @ [IPush rax]
+    in 
+    let compile_and_move (e : tag texpr) (n_param) : instruction list =
+      compile_expr e slot_env slot fenv tag_fun total_params @ [(move_arg_1_to_6 n_param rax)]
+    in 
+    let rec compiles_and_push (args : tag texpr list) : instruction list =
+      let n_param = List.length args in 
+      match args with
+      | [] -> []
+      | hd::tl -> 
+        (compiles_and_push tl) 
+        @ (if n_param > 6 then (compile_and_push hd) else (compile_and_move hd n_param))
+    in 
+    (store_first_6_args) 
+    @ (compiles_and_push args) 
+    @ [ICall nm] 
+    @ if largs > 6 then [(iAdd_arg_const (Reg RSP) (Int64.of_int (largs - 6)))] else []
+    @ (pop_first_6_args)
 
 
                           
@@ -293,15 +321,17 @@ let rec compile_funcs (func_list : tag tfun_def list) (cfenv : comp_fenv) : inst
       | arg :: tl -> extend_slot_env arg slot (add_args_to_env tl (Int64.add slot 1L))
     in
     let arg_values = add_args_to_env arg_names 1L in
-    ([i_label name] @ function_start
-                    @ (compile_expr e arg_values (Int64.of_int ((length arg_values) + 1)) comp_fenv tag (length arg_values))
+    ([i_label name] @ function_start (count_lets e)
+                    @ (compile_expr e arg_values Int64.minus_one compd_fenv tag (List.length arg_values))
                     @ function_end
                     @ instrs, compd_fenv)
 
 let compile_prog p : string =
   (*let _, e = p in*)
   let (tagged_funcs, tagged_main) = tag_prog p in
-  let instrs_main = compile_expr tagged_main empty_slot_env 1L 0 0 in
+  let (intrs_funs, cfenv)  = (compile_funcs tagged_funcs empty_comp_fenv) in 
+  let n_lets_main = count_lets tagged_main in
+  let instrs_main = [iSub_arg_const (Reg RSP) n_lets_main] @ compile_expr tagged_main empty_slot_env Int64.minus_one cfenv 0 0 in
   let prelude ="
 section .text
 extern print
@@ -321,4 +351,4 @@ error_not_boolean:
   mov RSI, RAX
   mov RDI, 0x2
   call typeError" in
-  prelude ^ pp_instrs (instrs @ [ IRet ]) ^ error_section
+  prelude ^ pp_instrs (instrs_main @ [ IRet ])^ pp_instrs intrs_funs ^ error_section

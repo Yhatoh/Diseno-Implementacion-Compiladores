@@ -1,4 +1,5 @@
 open Asm
+open Printf
 
 (* Environment *)
 type slot_env = (string * int64) list
@@ -13,23 +14,21 @@ let rec slot_env_lookup (var : string) (slot_env : slot_env) : int64 =
 
 
 (* Function Environment *)
+type comp_fun = string * string list
 type comp_fenv = comp_fun list
 let empty_comp_fenv : comp_fenv = []
 let rec lookup_comp_fenv : string -> int -> comp_fenv -> comp_fun =
   fun s total_args fenv -> 
     match fenv with
-    | [] -> raise (RTError (Printf.sprintf "Undefined function: %s" s))
+    | [] -> (failwith (sprintf "Undefined function: %s" s))
     | ((f_name, f_args)::fs) -> if (f_name = s) then
-                                  (if (length f_args) = total_args then
+                                  (if (List.length f_args) = total_args then
                                     (f_name, f_args)
-                                  else (failwith "Expected a total of %d parameters for %s, but got %d" (length f_args) s (total_args)))
-                                else lookup_comp_fenv s fs
+                                  else (failwith (sprintf "Expected a total of %d parameters for %s, but got %d" (List.length f_args) s (total_args))))
+                                else lookup_comp_fenv s total_args fs
 
-let extend_slot_env : string -> string list -> comp_env -> comp_env =
-  fun x v comp_env -> (x, v) :: comp_env
-
-
-type comp_fun = string * string list
+let extend_comp_fenv : string -> string list -> comp_fenv -> comp_fenv =
+  fun x v comp_fenv -> (x, v) :: comp_fenv
 
 
 let int_to_cc64_reg (n : int) : reg =
