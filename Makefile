@@ -9,7 +9,7 @@ ifeq ($(UNAME_S),Darwin) # for mac
 	CFLAGS ?= -Wl,-no_pie
 endif
 
-F =  # nothing by default
+F = # nothing by default
 src = # nothing by default
 
 .PHONY: test

@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef int64_t u64;
 
@@ -37,8 +38,75 @@ void typeError(u64 type, u64 givenValue) {
   exit(type);
 }
 
+u64 safe = 1;
+const u64 INT_MAX_OUR = 4611686018427387903;
+const u64 INT_MIN_OUR = -4611686018427387904;
+
+void check_overflow_add(u64 a1, u64 a2){
+  if(safe){
+    u64 real_a1 = a1 / 2;
+    u64 real_a2 = a2 / 2;
+    if((real_a2 < 0) && (INT_MIN_OUR - real_a2 > real_a1)){
+      printf("(+ %" PRId64 " %" PRId64 ") will produce underflow.\n", real_a1, real_a2);
+      exit(4);
+    } else if((real_a2 > 0) && (INT_MAX_OUR - real_a2 < real_a1)){
+      printf("(+ %" PRId64 " %" PRId64 ") will produce overflow.\n", real_a1, real_a2);
+      exit(3);
+    }
+  }
+}
+
+void check_overflow_sub(u64 a1, u64 a2){
+  if(safe){
+    u64 real_a1 = a1 / 2;
+    u64 real_a2 = a2 / 2;
+    if((real_a2 > 0) && (INT_MIN_OUR + real_a2 > real_a1)){
+      printf("(- %" PRId64 " %" PRId64 ") will produce underflow.\n", real_a1, real_a2);
+      exit(4);
+    } else if((real_a2 < 0) && (INT_MAX_OUR + real_a2 < real_a1)){
+      printf("(- %" PRId64 " %" PRId64 ") will produce overflow.\n", real_a1, real_a2);
+      exit(3);
+    }
+  }
+}
+
+void check_overflow_mul(u64 a1, u64 a2){
+  if(safe){
+    u64 real_a1 = a1 / 2;
+    u64 real_a2 = a2 / 2;
+
+    if((real_a1 == -1) && (real_a2 == INT_MIN_OUR)){
+      printf("(* %" PRId64 " %" PRId64 ") will produce overflow.\n", real_a1, real_a2);
+      exit(3);
+    } else if((real_a2 == -1) && (real_a1 == INT_MIN_OUR)){
+      printf("(* %" PRId64 " %" PRId64 ") will produce overflow.\n", real_a1, real_a2);
+      exit(3);
+    } else if(INT_MIN_OUR / real_a2 > real_a1){
+      printf("(* %" PRId64 " %" PRId64 ") will produce underflow.\n", real_a1, real_a2);
+      exit(4);
+    } else if(INT_MAX_OUR / real_a2 < real_a1){
+      printf("(* %" PRId64 " %" PRId64 ") will produce overflow.\n", real_a1, real_a2);
+      exit(3);
+    }
+  }
+}
+
+void check_div_by_0(u64 a1){
+  u64 real_a1 = a1 / 2;
+  if(real_a1 == 0){
+    printf("Division by 0\n");
+    exit(5);
+  }
+}
+
 
 int main(int argc, char** argv) {
+  char* flag = "-safe";
+  if(argc > 0){
+    if(!strcmp(argv[0], flag)){
+      safe = 1;
+    }
+  }
   u64 result = our_code_starts_here();
 
   u64 check = result & 1LL;

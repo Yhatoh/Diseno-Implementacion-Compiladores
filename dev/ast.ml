@@ -6,7 +6,7 @@ type prim1 = Add1 | Sub1 | Not | Print
 (* 
 type prim1 = Add1 | Sub1 
 | Print comment out this line if providing print via the sys interface *)
-type prim2 = Add | Sub | Mul | And | Lte 
+type prim2 = Add | Sub | Mul | Div | And | Lte 
 
 (* Algebraic datatype for expressions *)
 type expr = 

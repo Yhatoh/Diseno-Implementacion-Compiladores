@@ -31,6 +31,12 @@ let iXor_arg_const (arg1 : arg) (n : int64) : instruction = IXor (arg1, const_fa
 let iSub_arg_arg (arg1 : arg) (arg2 : arg) : instruction = ISub (arg1, arg2)
 let iSub_arg_const (arg1 : arg) (n : int64) : instruction = ISub (arg1, const_factory n)
 
+let iMul_arg_arg (arg1 : arg) (arg2 : arg) : instruction = IMul (arg1, arg2)
+let iMul_arg_const (arg1 : arg) (n : int64) : instruction = IMul (arg1, const_factory n)
+
+let iDiv_arg_arg (arg1 : arg) (arg2 : arg) : instruction = IDiv (arg1, arg2)
+let iDiv_arg_const (arg1 : arg) (n : int64) : instruction = IDiv (arg1, const_factory n)
+
 let iCmp_arg_arg (arg1 : arg) (arg2 : arg) : instruction = ICmp (arg1, arg2)
 let iCmp_arg_const (arg1 : arg) (n : int64) : instruction = ICmp (arg1, const_factory n)
 
@@ -43,12 +49,10 @@ let i_jg (label : string) : instruction = IJg label
 let i_label (label : string) : instruction = ILabel label
 
 let check_rax_is_type_instr (tp : int64) (slot : int64) : instruction list =
-  (*[move rax ptr, and ptr type, move rax ptr + 1, move rax ptr, cmp ptr + 1 type, jne error]*)
   let label = if tp = 0L then "error_not_number" else "error_not_boolean" in
   [
     iMov_arg_arg (rbp_pointer slot) rax;
     iAnd_arg_const rax 1L;
-    (*iMov_arg_arg (rbp_pointer (Int64.add slot 1L)) rax;*)
     iCmp_arg_const rax tp;
     iMov_arg_to_RAX (rbp_pointer slot);
     i_jne label
@@ -68,7 +72,7 @@ let type_of_unops (operation : prim1) (slot : int64) : instruction list =
 
 let type_of_binops (operation : prim2) (slot : int64) : instruction list =
   match operation with
-  | Add | Sub | Lte -> check_rax_is_int_instr slot
+  | Add | Sub | Mul | Div | Lte -> check_rax_is_int_instr slot
   | And -> check_rax_is_bool_instr slot
 
 let function_start (n_local_vars : int64) : instruction list =
@@ -110,6 +114,8 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
     match op with
     | Add -> as_list iAdd_arg_arg
     | Sub -> as_list iSub_arg_arg
+    | Mul -> as_list iMul_arg_arg
+    | Div -> as_list iDiv_arg_arg
     | And -> as_list iAnd_arg_arg
     | Lte -> compile_lte_with_tag
   in
@@ -195,8 +201,8 @@ let tag_prog (prog : prog) : tag tfun_def list * tag texpr =
 let rec count_lets (e : tag texpr) : int64 =
   match e with
   | TLet (_, _, e_let, _) -> (Int64.add 1L (count_lets e_let))
-  | TPrim1 (_, n, _) -> (Int64.add 1L (count_lets n)
-  )  | TPrim2 (_, e1, e2, _) -> (Int64.add 1L (max (count_lets e1) (count_lets e2)))
+  | TPrim1 (_, n, _) -> (Int64.add 1L (count_lets n))
+  | TPrim2 (_, e1, e2, _) -> (Int64.add 1L (max (count_lets e1) (count_lets e2)))
   | TIf (cond, thn, els, _) -> (Int64.add 1L (max (max (count_lets cond) (count_lets thn)) (count_lets els)))
   | TApply _ | TId _ | TBool _ | TNum _ -> 1L
 
@@ -217,6 +223,7 @@ let rec string_of_tag_expr(e : tag texpr) : string =
     | Add -> "+"
     | Sub -> "-"
     | Mul -> "*"
+    | Div -> "/"
     | And -> "&&"
     | Lte -> "<=") (string_of_tag_expr e1) (string_of_tag_expr e2)
   | TLet (x, e1, e2, tag) -> sprintf "(tag_%d let (%s %s) %s)" tag x (string_of_tag_expr e1) (string_of_tag_expr e2) 
@@ -232,13 +239,37 @@ let binop_boolean_to_instr_list (second_part : instruction list) (tag : int) (sk
 
 let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) : instruction list =
   let next_slot = (Int64.sub slot 1L) in
-  let rsp_ptr = rsp_pointer slot in
-  let mov_rax_to_rsp = iMov_arg_arg rsp_ptr rax in
+  (*let rsp_ptr = rsp_pointer slot in
+  let mov_rax_to_rsp = iMov_arg_arg rsp_ptr rax in*)
   let rbp_ptr = rbp_pointer slot in
   let mov_rax_to_rbp = iMov_arg_arg rbp_ptr rax in
   let compile_prim1 (op: prim1) (n: tag texpr) : instruction list =
     let compiled_n = (compile_expr n slot_env slot fenv tag_fun total_params) in
-    (compiled_n) @ (type_of_unops op slot) @ (unop_to_instr_list op)
+    (compiled_n) @ (type_of_unops op slot)
+    @ (begin match op with
+        | Add1 -> 
+          [iMov_arg_arg (rbp_pointer slot) rax;
+          IPush (Reg RSI); 
+          IPush (Reg RDI); 
+          iMov_arg_arg (Reg RDI) rax; 
+          iMov_arg_arg (Reg RSI) (Const 2L) ; 
+          ICall ("check_overflow_add") ; 
+          IPop (Reg RDI) ;
+          IPop (Reg RSI);
+          iMov_arg_arg rax (rbp_pointer slot)]
+        | Sub1 -> 
+          [iMov_arg_arg (rbp_pointer slot) rax;
+          IPush (Reg RSI); 
+          IPush (Reg RDI); 
+          iMov_arg_arg (Reg RDI) (rbp_pointer slot); 
+          iMov_arg_arg (Reg RSI) (Const 2L) ; 
+          ICall ("check_overflow_sub") ; 
+          IPop (Reg RDI) ;
+          IPop (Reg RSI);
+          iMov_arg_arg rax (rbp_pointer slot)]
+        | _ -> []
+      end)
+    @ (unop_to_instr_list op)
   in
   let compile_prim2 (op : prim2) (n1 : tag texpr) (n2 : tag texpr) (tag : int) : instruction list =
     let compile_e (n : tag texpr) (slot : int64): instruction list = compile_expr n slot_env slot fenv tag_fun total_params in
@@ -248,6 +279,41 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
       [mov_rax_to_rbp]
       @ compiled_e2  
       @ [iMov_arg_arg (rbp_pointer next_slot) rax]
+      (*Chancheria*)
+      @ (begin match op with
+          | And | Lte -> []
+          | Add ->
+            [IPush (Reg RSI); 
+             IPush (Reg RDI); 
+            iMov_arg_arg (Reg RDI) rbp_ptr; 
+            iMov_arg_arg (Reg RSI) (rbp_pointer next_slot) ; 
+            ICall ("check_overflow_add") ; 
+            IPop (Reg RDI) ;
+            IPop (Reg RSI)]
+          | Sub ->
+            [IPush (Reg RSI); 
+             IPush (Reg RDI); 
+            iMov_arg_arg (Reg RDI) rbp_ptr; 
+            iMov_arg_arg (Reg RSI) (rbp_pointer next_slot) ; 
+            ICall ("check_overflow_sub") ; 
+            IPop (Reg RDI) ;
+            IPop (Reg RSI)]
+          | Mul -> 
+            [IPush (Reg RSI); 
+             IPush (Reg RDI); 
+            iMov_arg_arg (Reg RDI) rbp_ptr; 
+            iMov_arg_arg (Reg RSI) (rbp_pointer next_slot) ; 
+            ICall ("check_overflow_mul") ; 
+            IPop (Reg RDI) ;
+            IPop (Reg RSI)]
+          | Div ->
+            [IPush (Reg RSI); 
+             IPush (Reg RDI); 
+             iMov_arg_arg (Reg RDI) (rbp_pointer next_slot) ; 
+             ICall ("check_div_by_0") ; 
+             IPop (Reg RDI);
+             IPop (Reg RSI)]
+        end)
       @ [iMov_arg_arg rax rbp_ptr]
       @ (binop_to_instr op next_slot tag tag_fun)
     in
@@ -255,6 +321,8 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     @ (begin match op with
         | And -> binop_boolean_to_instr_list second_part tag false
         | Add | Sub | Lte -> second_part
+        | Mul -> second_part @ [ISar (rax, Const 1L)]
+        | Div -> second_part @ [ISal (rax, Const 1L)]
       end)
   in
   let compile_let (x : string) (v : tag texpr) (e : tag texpr) : instruction list =
@@ -341,7 +409,10 @@ let compile_prog p : string =
   let instrs_main = function_start n_lets_main @ compile_expr tagged_main empty_slot_env Int64.minus_one cfenv 0 0 @ function_end in
   let prelude ="
 section .text
-extern print
+extern check_overflow_add
+extern check_overflow_sub
+extern check_overflow_mul
+extern check_div_by_0
 extern typeError
 global our_code_starts_here
 our_code_starts_here:" in
@@ -358,4 +429,4 @@ error_not_boolean:
   mov RSI, RAX
   mov RDI, 0x2
   call typeError" in
-  prelude ^ pp_instrs (instrs_main @ [ IRet ])^ pp_instrs intrs_funs ^ error_section
+  prelude ^ pp_instrs (instrs_main)^ pp_instrs intrs_funs ^ error_section
