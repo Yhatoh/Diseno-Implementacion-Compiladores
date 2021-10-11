@@ -1,5 +1,5 @@
 (
-    (def (g x) (if (<= x 5) 5 x))
-    (def (f x y) (+ (+ 2 x) (g y)))
+    (def (g x) (if (<= (print x) 5) 5 x))
+    (def (f x y) (+ (+ 2 x) (print (g y))))
     (f 5 3)
 )

@@ -6,7 +6,6 @@ type slot_env = (string * int64) list
 let empty_slot_env : slot_env = []
 let extend_slot_env : string -> int64 -> slot_env -> slot_env =
   fun x v slot_env -> (x, v) :: slot_env
-
 let rec slot_env_lookup (var : string) (slot_env : slot_env) : int64 =
   match slot_env with
   | [] -> failwith "Unbound identifier."
@@ -26,12 +25,11 @@ let rec lookup_comp_fenv : string -> int -> comp_fenv -> comp_fun =
                                     (f_name, f_args)
                                   else (failwith (sprintf "Expected a total of %d parameters for %s, but got %d" (List.length f_args) s (total_args))))
                                 else lookup_comp_fenv s total_args fs
-
 let extend_comp_fenv : string -> string list -> comp_fenv -> comp_fenv =
   fun x v comp_fenv -> (x, v) :: comp_fenv
 
 
-let int_to_cc64_reg (n : int) : reg =
+  let int_to_cc64_reg (n : int) : reg =
   match n with
   | 1 -> RDI
   | 2 -> RSI
@@ -42,6 +40,7 @@ let int_to_cc64_reg (n : int) : reg =
   | _ -> failwith (sprintf "Argument %d out of bounds." n)
 
 
+(* Calling Convention 64 *)
 let store_arg (n : int) (a : arg) : instruction =
   if (n > 0 && n < 7) then IPush (Reg (int_to_cc64_reg n)) else IPush a
 

@@ -56,6 +56,7 @@ let rec string_of_expr(e : expr) : string =
     | Add -> "+"
     | Sub -> "-"
     | Mul -> "*"
+    | Div -> "/"
     | And -> "and"
     | Lte -> "<=") (string_of_expr e1) (string_of_expr e2)
   | Let (x, e1, e2) -> sprintf "(let (%s %s) %s)" x (string_of_expr e1) (string_of_expr e2) 
