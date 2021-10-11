@@ -1,0 +1,6 @@
+NAME: let
+DESCRIPTION: multiple let binding a variable
+SRC:
+(let (x 3) (let (y x) (let (x y) x)))
+EXPECTED:
+|ORACLE

@@ -224,8 +224,10 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
 
   let compile_tid (s : string) : instruction list =
     let pos_stack = slot_env_lookup s slot_env in 
-    let search_var = if (pos_stack > 6L || 0L >= pos_stack) 
-                     then rbp_pointer (slot_env_lookup s slot_env) 
+    let search_var = if (0L >= pos_stack)
+                     then rbp_pointer pos_stack
+                     else if (pos_stack > 6L)
+                     then rbp_pointer (Int64.sub pos_stack 5L)
                      else (Reg (int_to_cc64_reg (Int64.to_int pos_stack))) 
     in
     [iMov_arg_to_RAX (search_var)]

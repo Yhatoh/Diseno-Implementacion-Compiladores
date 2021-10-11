@@ -1,0 +1,7 @@
+NAME: div - check div 0
+DESCRIPTION: Check division by 0
+STATUS: RT error
+SRC:
+(/ 2 0)
+EXPECTED:
+Division by 0

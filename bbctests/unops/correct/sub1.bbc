@@ -3,4 +3,4 @@ DESCRIPTION: decrements a number
 SRC:
 (sub1 20)
 EXPECTED:
-|INTERPRET
+|ORACLE

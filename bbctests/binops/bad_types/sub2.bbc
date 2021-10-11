@@ -1,0 +1,7 @@
+NAME: sub - check type e2
+DESCRIPTION: Expected integer, but got boolean in the second expression
+STATUS: RT error
+SRC:
+(- 2 true)
+EXPECTED:
+Expected integer, but got true\.

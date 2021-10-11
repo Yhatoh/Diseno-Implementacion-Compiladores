@@ -1,0 +1,7 @@
+NAME: sub1 - check type
+DESCRIPTION: Expected integer, but got boolean
+STATUS: RT error
+SRC:
+(sub1 true)
+EXPECTED:
+Expected integer, but got true\.

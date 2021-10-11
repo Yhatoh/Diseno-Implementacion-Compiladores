@@ -1,0 +1,7 @@
+NAME: and - check type e2
+DESCRIPTION: Expected boolean, but got integer in the second expression
+STATUS: RT error
+SRC:
+(and 1 true)
+EXPECTED:
+Expected boolean, but got 1\.

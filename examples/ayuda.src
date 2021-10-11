@@ -1,1 +1,4 @@
-(if 100 true false)
+(
+	(def (f x) x)
+	(f 1)
+)

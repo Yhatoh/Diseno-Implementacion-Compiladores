@@ -1,0 +1,7 @@
+NAME: add - check underflow
+DESCRIPTION: add produces underflow
+STATUS: RT error
+SRC:
+(+ -4611686018427387904 -1)
+EXPECTED:
+(\+ -4611686018427387904 -1) will produce underflow\.
