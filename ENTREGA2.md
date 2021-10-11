@@ -31,3 +31,4 @@ Para los tests se implementaron tests para la compilación correcta de las nueva
 
 ### Detalles adicionales
 - Se adaptó el archivo `sys.c` para generar compatibilidad con la nueva forma de representar tipos de variables.
+- 2 de los tests, los cuales prueban "print", podrían no correr en Windows debido a la diferencia en saltos de línea entre este y Linux. En Linux deberían ejecutarse correctamente y pasar.
