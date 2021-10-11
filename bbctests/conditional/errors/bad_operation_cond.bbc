@@ -4,4 +4,4 @@ STATUS: RT error
 SRC:
 (if (+ 1 100) true false)
 EXPECTED:
-Expected boolean, but got 100\.
+Expected boolean, but got 101\.
