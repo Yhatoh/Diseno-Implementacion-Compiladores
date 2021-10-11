@@ -1,0 +1,7 @@
+NAME: not - check type
+DESCRIPTION: Expected boolean, but got integer
+STATUS: RT error
+SRC:
+(not -20)
+EXPECTED:
+Expected boolean, but got -20\.

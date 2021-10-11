@@ -81,12 +81,18 @@ void check_overflow_mul(u64 a1, u64 a2){
     } else if((real_a2 == -1) && (real_a1 == INT_MIN_OUR)){
       printf("(* %" PRId64 " %" PRId64 ") will produce overflow.\n", real_a1, real_a2);
       exit(3);
-    } else if(INT_MIN_OUR / real_a2 > real_a1){
+    } else if(real_a1 > 0 && real_a2 < 0 && INT_MIN_OUR / real_a2 < real_a1){
       printf("(* %" PRId64 " %" PRId64 ") will produce underflow.\n", real_a1, real_a2);
       exit(4);
-    } else if(INT_MAX_OUR / real_a2 < real_a1){
+    } else if(real_a1 > 0 && real_a2 > 0 && INT_MAX_OUR / real_a2 < real_a1){
       printf("(* %" PRId64 " %" PRId64 ") will produce overflow.\n", real_a1, real_a2);
       exit(3);
+    } else if(real_a1 < 0 && real_a2 < 0 && INT_MAX_OUR / (-1 * real_a2) < (-1 * real_a1)){
+      printf("(* %" PRId64 " %" PRId64 ") will produce overflow.\n", real_a1, real_a2);
+      exit(3);
+    } else if(real_a1 < 0 && real_a2 > 0 && INT_MIN_OUR / real_a2 > real_a1){
+      printf("(* %" PRId64 " %" PRId64 ") will produce underflow.\n", real_a1, real_a2);
+      exit(4);
     }
   }
 }
@@ -110,14 +116,15 @@ int main(int argc, char** argv) {
   u64 result = our_code_starts_here();
 
   u64 check = result & 1LL;
-  result /= 2;
   if(check){
+    result >>= 1;
     if(result & 1LL){
       printf("true\n");
     } else {
       printf("false\n");
     }
   } else {
+    result /= 2;
     printf("%" PRId64 "\n", result);
   }
   return 0;

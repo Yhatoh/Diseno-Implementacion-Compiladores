@@ -1,0 +1,6 @@
+NAME: not
+DESCRIPTION: not of a boolean
+SRC:
+(not true)
+EXPECTED:
+|ORACLE

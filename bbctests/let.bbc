@@ -1,6 +1,0 @@
-NAME: let
-DESCRIPTION: let binding var x
-SRC:
-(let (x 20) (+ x 3))
-EXPECTED:
-|INTERPRET

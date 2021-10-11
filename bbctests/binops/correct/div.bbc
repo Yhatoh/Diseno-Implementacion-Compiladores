@@ -1,0 +1,6 @@
+NAME: div
+DESCRIPTION: divide two numbers
+SRC:
+(/ 20 -2)
+EXPECTED:
+|ORACLE

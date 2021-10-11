@@ -1,6 +1,6 @@
 NAME: and
 DESCRIPTION: and two booleans
 SRC:
-(&& true false)
+(and true false)
 EXPECTED:
-|INTERPRET
+|ORACLE

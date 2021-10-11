@@ -3,4 +3,4 @@ DESCRIPTION: compare two numbers with less than or equal
 SRC:
 (<= 2 100)
 EXPECTED:
-|INTERPRET
+|ORACLE

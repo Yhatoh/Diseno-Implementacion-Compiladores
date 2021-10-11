@@ -1,6 +1,0 @@
-NAME: not false
-DESCRIPTION: not of a false value
-SRC:
-(not false)
-EXPECTED:
-|INTERPRET
