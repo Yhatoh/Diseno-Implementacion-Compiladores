@@ -195,6 +195,11 @@ let test_constructor_rsp_pointer () =
   check arg "same arg"
     (rsp_pointer 2L)
     (Ptr (RSP, 2L))
+  
+let test_constructor_rbp_pointer () =
+  check arg "same arg"
+    (rbp_pointer 2L)
+    (Ptr (RBP, 2L))
 
 let test_constructor_const () =
   check arg "same arg"
@@ -203,8 +208,8 @@ let test_constructor_const () =
 
 let test_constructor_imov_arg_arg () =
   check instruction "same instruction"
-    (iMov_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
-    (IMov (Reg RAX, Ptr(RSP, 2L)))
+    (iMov_arg_arg (Reg RAX) (Ptr(RBP, 2L)))
+    (IMov (Reg RAX, Ptr(RBP, 2L)))
 
 let test_constructor_imov_arg_const () =
   check instruction "same instruction"
@@ -213,8 +218,8 @@ let test_constructor_imov_arg_const () =
 
 let test_constructor_imov_arg_to_RAX () =
   check instruction "same instruction"
-    (iMov_arg_to_RAX (Ptr(RSP, 2L)))
-    (IMov (Reg RAX, Ptr(RSP, 2L)))
+    (iMov_arg_to_RAX (Ptr(RBP, 2L)))
+    (IMov (Reg RAX, Ptr(RBP, 2L)))
 
 let test_constructor_imov_const_to_RAX () =
   check instruction "same instruction"
@@ -223,8 +228,8 @@ let test_constructor_imov_const_to_RAX () =
 
 let test_constructor_iadd_arg_arg () =
   check instruction "same instruction"
-    (iAdd_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
-    (IAdd (Reg RAX, Ptr(RSP, 2L)))
+    (iAdd_arg_arg (Reg RAX) (Ptr(RBP, 2L)))
+    (IAdd (Reg RAX, Ptr(RBP, 2L)))
 
 let test_constructor_iadd_arg_const () =
   check instruction "same instruction"
@@ -233,8 +238,8 @@ let test_constructor_iadd_arg_const () =
 
 let test_constructor_iand_arg_arg () =
   check instruction "same instruction"
-    (iAnd_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
-    (IAnd (Reg RAX, Ptr(RSP, 2L)))
+    (iAnd_arg_arg (Reg RAX) (Ptr(RBP, 2L)))
+    (IAnd (Reg RAX, Ptr(RBP, 2L)))
 
 let test_constructor_iand_arg_const () =
   check instruction "same instruction"
@@ -243,8 +248,8 @@ let test_constructor_iand_arg_const () =
 
 let test_constructor_isub_arg_arg () =
   check instruction "same instruction"
-    (iSub_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
-    (ISub (Reg RAX, Ptr(RSP, 2L)))
+    (iSub_arg_arg (Reg RAX) (Ptr(RBP, 2L)))
+    (ISub (Reg RAX, Ptr(RBP, 2L)))
 
 let test_constructor_isub_arg_const () =
   check instruction "same instruction"
@@ -253,8 +258,8 @@ let test_constructor_isub_arg_const () =
 
 let test_constructor_icmp_arg_arg () =
   check instruction "same instruction"
-    (iCmp_arg_arg (Reg RAX) (Ptr(RSP, 2L)))
-    (ICmp (Reg RAX, Ptr(RSP, 2L)))
+    (iCmp_arg_arg (Reg RAX) (Ptr(RBP, 2L)))
+    (ICmp (Reg RAX, Ptr(RBP, 2L)))
 
 let test_constructor_icmp_arg_const () =
   check instruction "same instruction"
@@ -305,50 +310,50 @@ let test_unop_to_instr_list_not () =
 let test_binop_to_instr_list_add () =
   check instruction_list "same instruction_list"
     (binop_to_instr Add 3L 1 0)
-    ([IAdd (Reg RAX, Ptr(RSP, 3L))])
+    ([IAdd (Reg RAX, Ptr(RBP, 3L))])
 
 let test_binop_to_instr_list_and () =
   check instruction_list "same instruction_list"
     (binop_to_instr And 3L 1 0)
-    ([IAnd (Reg RAX, Ptr(RSP, 3L))])
+    ([IAnd (Reg RAX, Ptr(RBP, 3L))])
 
 let test_binop_to_instr_list_lte () =
   check instruction_list "same instruction_list"
     (binop_to_instr Lte 3L 1 0)
-    ([ICmp (Reg RAX, Ptr(RSP, 3L))
-      ; IJg ("if_false_1")
+    ([ICmp (Reg RAX, Ptr(RBP, 3L))
+      ; IJg ("if_false_0_1")
       ; IMov (Reg RAX, Const 3L)
-      ; IJmp ("done_1")
-      ; ILabel ("if_false_1")
+      ; IJmp ("done_0_1")
+      ; ILabel ("if_false_0_1")
       ; IMov (Reg RAX, Const 1L)
-      ; ILabel ("done_1")])
+      ; ILabel ("done_0_1")])
 
 let test_binop_boolean_to_instr_list_and () = 
   check instruction_list "same instruction_list"
-    (binop_boolean_to_instr_list [IMov (Ptr (RSP, 1L), Reg RAX); 
-                                  IAnd (Reg RAX, Ptr(RSP, 3L)); 
-                                  IMov (Ptr (RSP, 2L), Reg RAX);
-                                  IMov (Reg RAX, Ptr (RSP, 1L));
-                                  IAnd (Reg RAX, Ptr(RSP, 2L))] 1 false)
+    (binop_boolean_to_instr_list [IMov (Ptr (RBP, 1L), Reg RAX); 
+                                  IAnd (Reg RAX, Ptr(RBP, 3L)); 
+                                  IMov (Ptr (RBP, 2L), Reg RAX);
+                                  IMov (Reg RAX, Ptr (RBP, 1L));
+                                  IAnd (Reg RAX, Ptr(RBP, 2L))] 1 0 false)
     ([ICmp (Reg RAX, Const 1L); 
-      IJe ("skip_1");
-      IMov (Ptr (RSP, 1L), Reg RAX); 
-      IAnd (Reg RAX, Ptr(RSP, 3L)); 
-      IMov (Ptr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 1L));
-      IAnd (Reg RAX, Ptr(RSP, 2L));
-      ILabel ("skip_1")])
+      IJe ("skip_0_1");
+      IMov (Ptr (RBP, 1L), Reg RAX); 
+      IAnd (Reg RAX, Ptr(RBP, 3L)); 
+      IMov (Ptr (RBP, 2L), Reg RAX);
+      IMov (Reg RAX, Ptr (RBP, 1L));
+      IAnd (Reg RAX, Ptr(RBP, 2L));
+      ILabel ("skip_0_1")])
 
 let test_lte_op_to_instr_list () =
   check instruction_list "same instruction_list"
-    (compile_lte (Reg RAX) (Ptr (RSP, 3L)) (1) 0)
-    ([ICmp (Reg RAX, Ptr(RSP, 3L))
-      ; IJg ("if_false_1")
+    (compile_lte (Reg RAX) (Ptr (RBP, 3L)) (1) 0)
+    ([ICmp (Reg RAX, Ptr(RBP, 3L))
+      ; IJg ("if_false_0_1")
       ; IMov (Reg RAX, Const 3L)
-      ; IJmp ("done_1")
-      ; ILabel ("if_false_1")
+      ; IJmp ("done_0_1")
+      ; ILabel ("if_false_0_1")
       ; IMov (Reg RAX, Const 1L)
-      ; ILabel ("done_1")])
+      ; ILabel ("done_0_1")])
 
 (* Test for our [tag] function *)
 let test_tag_num () = 
@@ -457,74 +462,275 @@ let test_compile_bool () =
     (compile_expr (TBool (true, 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 3L)])
 
+let test_check_rax_is_type_int () =
+  check instruction_list "same instruction_list"
+    (check_rax_is_type_instr 0L 1L)
+    ([
+      IMov (Ptr (RBP, 1L), Reg RAX) ;
+      IAnd (Reg RAX, Const 1L) ;
+      ICmp (Reg RAX, Const 0L) ;
+      IMov (Reg RAX, Ptr (RBP, 1L)) ;
+      IJne ("error_not_number")
+    ])
+
+let test_check_rax_is_type_bool () =
+  check instruction_list "same instruction_list"
+    (check_rax_is_type_instr 1L 1L)
+    ([
+      IMov (Ptr (RBP, 1L), Reg RAX) ;
+      IAnd (Reg RAX, Const 1L) ;
+      ICmp (Reg RAX, Const 1L) ;
+      IMov (Reg RAX, Ptr (RBP, 1L)) ;
+      IJne "error_not_boolean"
+    ])
+
+
+let test_compile_print_int () =
+  check instruction_list "same instruction_list"
+    (compile_expr (tag_expr (Prim1 (Print, Num 2L))) empty_slot_env Int64.minus_one [] 0 0)
+    ([
+      IMov (Reg RAX, Const 4L) ;
+      IPush (Reg RDI) ;
+      IMov (Reg RDI, Reg RAX) ;
+      ICall "print" ;
+      IPop (Reg RDI)
+    ])
+  
+let test_compile_print_bool () =
+  check instruction_list "same instruction_list"
+    (compile_expr (tag_expr (Prim1 (Print, Bool true))) empty_slot_env Int64.minus_one [] 0 0)
+    ([
+      IMov (Reg RAX, Const 3L) ;
+      IPush (Reg RDI) ;
+      IMov (Reg RDI, Reg RAX) ;
+      ICall "print" ;
+      IPop (Reg RDI)
+    ])
+  
+let test_compile_func_def () =
+  check instruction_list "same instruction_list"
+    (let (f_list, _) = (compile_funcs (tag_funs [(DefFun ("f", ["x"], Id "x"))] 1) empty_comp_fenv) in
+      f_list)
+    ([
+      ILabel "f" ;
+      IPush (Reg RBP) ;
+      IMov (Reg RBP, Reg RSP) ;
+      ISub (Reg RSP, Const 8L) ;
+      IMov (Reg RAX, Reg RDI) ;
+      IMov (Reg RSP, Reg RBP) ;
+      IPop (Reg RBP);
+      IRet
+    ])
+
+let test_compile_func_app () =
+  check instruction_list "same instruction_list"
+    (compile_expr (tag_expr ((Apply ("f", [(Num 1L)])))) empty_slot_env Int64.minus_one [("f", ["x"])] 0 0)
+    ([
+      IPush (Reg R9) ;
+      IPush (Reg R8) ;
+      IPush (Reg RCX) ;
+      IPush (Reg RDX) ;
+      IPush (Reg RSI) ;
+      IPush (Reg RDI) ;
+      IMov (Reg RAX, Const 2L) ;
+      IMov (Reg RDI, Reg RAX) ;
+      ICall "f" ;
+      IPop (Reg RDI) ;
+      IPop (Reg RSI) ;
+      IPop (Reg RDX) ;
+      IPop (Reg RCX) ;
+      IPop (Reg R8) ;
+      IPop (Reg R9) ;
+    ])
+
+
 let test_compile_add1 () = 
   check instruction_list "same instruction_list"
     (compile_expr (TPrim1 (Add1, (TNum (1L, 2)), 1)) empty_slot_env Int64.minus_one [] 0 0)
-    ([IMov (Reg RAX, Const 2L); IAdd (Reg RAX, Const 2L)])
+    ([IMov (Reg RAX, Const 2L)] @
+    check_rax_is_type_instr 0L Int64.minus_one @
+    [
+      IMov (Ptr (RBP, Int64.minus_one), Reg RAX) ;
+      IPush (Reg RSI) ;
+      IPush (Reg RDI) ;
+      IMov (Reg RDI, Reg RAX) ;
+      IMov (Reg RSI, Const 2L) ;
+      ICall "check_overflow_add" ;
+      IPop (Reg RDI) ;
+      IPop (Reg RSI) ;
+      IMov (Reg RAX, Ptr (RBP, Int64.minus_one))
+    ] @ [IAdd (Reg RAX, Const 2L)])
 
 let test_compile_sub1 () = 
   check instruction_list "same instruction_list"
     (compile_expr (TPrim1 (Sub1, (TNum (1L, 2)), 1)) empty_slot_env Int64.minus_one [] 0 0)
-    ([IMov (Reg RAX, Const 2L); ISub (Reg RAX, Const 2L)])
+    ([IMov (Reg RAX, Const 2L)] @
+    check_rax_is_type_instr 0L Int64.minus_one @
+    [
+      IMov (Ptr (RBP, Int64.minus_one), Reg RAX) ;
+      IPush (Reg RSI) ;
+      IPush (Reg RDI) ;
+      IMov (Reg RDI, Reg RAX) ;
+      IMov (Reg RSI, Const 2L) ;
+      ICall "check_overflow_sub" ;
+      IPop (Reg RDI) ;
+      IPop (Reg RSI) ;
+      IMov (Reg RAX, Ptr (RBP, Int64.minus_one))
+    ] @ [ISub (Reg RAX, Const 2L)])
 
 let test_compile_not () = 
   check instruction_list "same instruction_list"
     (compile_expr (TPrim1 (Not, (TBool (false, 2)), 1)) empty_slot_env Int64.minus_one [] 0 0)
-    ([IMov (Reg RAX, Const 1L); INot (Reg RAX) ; IAdd (Reg RAX, Const 1L)])
+    ([IMov (Reg RAX, Const 1L)] @
+    check_rax_is_type_instr 1L Int64.minus_one @
+    [INot (Reg RAX) ; IAdd (Reg RAX, Const 1L)])
 
 let test_compile_add () = 
   check instruction_list "same instruction_list"
     (compile_expr (TPrim2 (Add, (TNum (4L, 2)), (TNum (2L, 3)), 1)) empty_slot_env Int64.minus_one [] 0 0)
-    ([IMov (Reg RAX, Const 8L); 
-      IMov (Ptr (RSP, 1L), Reg RAX); 
-      IMov (Reg RAX, Const 4L) ; 
-      IMov (Ptr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 1L));
-      IAdd (Reg RAX, Ptr (RSP, 2L));
+    ([IMov (Reg RAX, Const 8L)] @
+      check_rax_is_type_instr 0L Int64.minus_one @
+      [IMov (Ptr (RBP, Int64.minus_one), Reg RAX); 
+      IMov (Reg RAX, Const 4L)] @
+      check_rax_is_type_instr 0L (Int64.sub 0L 2L) @
+      [IMov (Ptr (RBP, (Int64.sub 0L 2L)), Reg RAX)] @
+      [
+        IPush (Reg RSI) ;
+        IPush (Reg RDI) ;
+        IMov (Reg RDI, Ptr (RBP, Int64.minus_one)) ;
+        IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 2L))) ;
+        ICall "check_overflow_add" ;
+        IPop (Reg RDI) ;
+        IPop (Reg RSI) ;
+        IMov (Reg RAX, Ptr (RBP, Int64.minus_one))
+      ] @
+      [IAdd (Reg RAX, Ptr (RBP, (Int64.sub 0L 2L)));
      ])
+
+let test_compile_sub () = 
+check instruction_list "same instruction_list"
+  (compile_expr (TPrim2 (Sub, (TNum (4L, 2)), (TNum (2L, 3)), 1)) empty_slot_env Int64.minus_one [] 0 0)
+  ([IMov (Reg RAX, Const 8L)] @
+    check_rax_is_type_instr 0L Int64.minus_one @
+    [IMov (Ptr (RBP, Int64.minus_one), Reg RAX); 
+    IMov (Reg RAX, Const 4L)] @
+    check_rax_is_type_instr 0L (Int64.sub 0L 2L) @
+    [IMov (Ptr (RBP, (Int64.sub 0L 2L)), Reg RAX)] @
+    [
+      IPush (Reg RSI) ;
+      IPush (Reg RDI) ;
+      IMov (Reg RDI, Ptr (RBP, Int64.minus_one)) ;
+      IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 2L))) ;
+      ICall "check_overflow_sub" ;
+      IPop (Reg RDI) ;
+      IPop (Reg RSI) ;
+      IMov (Reg RAX, Ptr (RBP, Int64.minus_one))
+    ] @
+    [ISub (Reg RAX, Ptr (RBP, (Int64.sub 0L 2L)));
+    ])
+
+let test_compile_mul () = 
+  check instruction_list "same instruction_list"
+    (compile_expr (TPrim2 (Mul, (TNum (4L, 2)), (TNum (2L, 3)), 1)) empty_slot_env Int64.minus_one [] 0 0)
+    ([IMov (Reg RAX, Const 8L)] @
+      check_rax_is_type_instr 0L Int64.minus_one @
+      [IMov (Ptr (RBP, Int64.minus_one), Reg RAX); 
+      IMov (Reg RAX, Const 4L)] @
+      check_rax_is_type_instr 0L (Int64.sub 0L 2L) @
+      [IMov (Ptr (RBP, (Int64.sub 0L 2L)), Reg RAX)] @
+      [
+        IPush (Reg RSI) ;
+        IPush (Reg RDI) ;
+        IMov (Reg RDI, Ptr (RBP, Int64.minus_one)) ;
+        IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 2L))) ;
+        ICall "check_overflow_mul" ;
+        IPop (Reg RDI) ;
+        IPop (Reg RSI) ;
+        IMov (Reg RAX, Ptr (RBP, Int64.minus_one))
+      ] @
+      [IMul (Reg RAX, Ptr (RBP, (Int64.sub 0L 2L)));
+       ISar (Reg RAX, Const 1L);
+      ])
+
+let test_compile_div () = 
+  check instruction_list "same instruction_list"
+    (compile_expr (TPrim2 (Div, (TNum (4L, 2)), (TNum (2L, 3)), 1)) empty_slot_env Int64.minus_one [] 0 0)
+    ([IMov (Reg RAX, Const 8L)] @
+      check_rax_is_type_instr 0L Int64.minus_one @
+      [IMov (Ptr (RBP, Int64.minus_one), Reg RAX); 
+      IMov (Reg RAX, Const 4L)] @
+      check_rax_is_type_instr 0L (Int64.sub 0L 2L) @
+      [IMov (Ptr (RBP, (Int64.sub 0L 2L)), Reg RAX)] @
+      [
+        IPush (Reg RSI) ;
+        IPush (Reg RDI) ;
+        IMov (Reg RDI, Ptr (RBP, (Int64.sub 0L 2L))) ;
+        ICall "check_div_by_0" ;
+        IPop (Reg RDI) ;
+        IPop (Reg RSI) ;
+        IMov (Reg RAX, Ptr (RBP, Int64.minus_one))
+      ] @
+      [IDiv (Reg RAX, Ptr (RBP, (Int64.sub 0L 2L)));
+        ISal (Reg RAX, Const 1L);
+      ])
 
 let test_compile_and () = 
   check instruction_list "same instruction_list"
     (compile_expr (TPrim2 (And, (TBool (true, 2)), (TBool (true, 3)), 1)) empty_slot_env Int64.minus_one [] 0 0)
-    ([IMov (Reg RAX, Const 3L); 
-      ICmp (Reg RAX, Const 1L);
-      IJe ("skip_1");
-      IMov (Ptr (RSP, 1L), Reg RAX); 
-      IMov (Reg RAX, Const 3L) ; 
-      IMov (Ptr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 1L));
-      IAnd (Reg RAX, Ptr (RSP, 2L));
-      ILabel ("skip_1")
+    ([IMov (Reg RAX, Const 3L)] @
+      check_rax_is_type_instr 1L Int64.minus_one @
+      [ICmp (Reg RAX, Const 1L);
+      IJe ("skip_0_1");
+      IMov (Ptr (RBP, Int64.minus_one), Reg RAX); 
+      IMov (Reg RAX, Const 3L)] @
+      check_rax_is_type_instr 1L (Int64.sub 0L 2L) @
+      [IMov (Ptr (RBP, (Int64.sub 0L 2L)), Reg RAX);
+      IMov (Reg RAX, Ptr (RBP, Int64.minus_one));
+      IAnd (Reg RAX, Ptr (RBP, (Int64.sub 0L 2L)));
+      ILabel ("skip_0_1")
      ])
 
 let test_compile_lte () = 
   check instruction_list "same instruction_list"
     (compile_expr (TPrim2 (Lte, (TNum (4L, 2)), (TNum (2L, 3)), 1)) empty_slot_env Int64.minus_one [] 0 0)
-    ([IMov (Reg RAX, Const 3L); 
-      IMov (Ptr (RSP, 1L), Reg RAX); 
-      IMov (Reg RAX, Const 3L) ; 
-      IMov (Ptr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 1L));
-      ICmp (Reg RAX, Ptr (RSP, 2L));
-      IJg ("if_else_1");
+    ([IMov (Reg RAX, Const 8L)] @
+      check_rax_is_type_instr 0L Int64.minus_one @
+      [IMov (Ptr (RBP, Int64.minus_one), Reg RAX); 
+      IMov (Reg RAX, Const 4L)] @
+      check_rax_is_type_instr 0L (Int64.sub 0L 2L) @
+      [IMov (Ptr (RBP, (Int64.sub 0L 2L)), Reg RAX);
+      IMov (Reg RAX, Ptr (RBP, Int64.minus_one));
+      ICmp (Reg RAX, Ptr (RBP, (Int64.sub 0L 2L)));
+      IJg ("if_false_0_1");
       IMov (Reg RAX, Const 3L);
-      IJmp ("done_1");
-      ILabel ("if_else_1");
+      IJmp ("done_0_1");
+      ILabel ("if_false_0_1");
       IMov (Reg RAX, Const 1L);
-      ILabel ("done_1")
+      ILabel ("done_0_1")
      ])
 
 let test_compile_let () = 
   check instruction_list "same instruction_list"
     (compile_expr (TLet ("x", (TNum (4L, 2)), TPrim2 (Add, (TId ("x", 4)), (TNum (2L, 5)), 3), 1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 8L);
-      IMov (Ptr (RSP, 1L), Reg RAX);
-      IMov (Reg RAX, Ptr(RSP, 1L));
-      IMov (Ptr (RSP, 2L), Reg RAX); 
-      IMov (Reg RAX, Const 4L) ; 
-      IMov (Ptr (RSP, 3L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 2L)); 
-      IAdd (Reg RAX, Ptr (RSP, 3L));
+      IMov (Ptr (RBP, Int64.minus_one), Reg RAX);
+      IMov (Reg RAX, Ptr(RBP, Int64.minus_one))] @
+      check_rax_is_type_instr 0L (Int64.sub 0L 2L) @
+      [IMov (Ptr (RBP, (Int64.sub 0L 2L)), Reg RAX); 
+      IMov (Reg RAX, Const 4L)] @
+      check_rax_is_type_instr 0L (Int64.sub 0L 3L) @
+      [IMov (Ptr (RBP, (Int64.sub 0L 3L)), Reg RAX)] @
+      [
+        IPush (Reg RSI) ;
+        IPush (Reg RDI) ;
+        IMov (Reg RDI, Ptr (RBP, (Int64.sub 0L 2L))) ;
+        IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 3L))) ;
+        ICall "check_overflow_add" ;
+        IPop (Reg RDI) ;
+        IPop (Reg RSI) ;
+      ] @
+      [IMov (Reg RAX, Ptr (RBP, (Int64.sub 0L 2L))); 
+      IAdd (Reg RAX, Ptr (RBP, (Int64.sub 0L 3L)));
      ])
 
 let test_compile_if () = 
@@ -538,19 +744,31 @@ let test_compile_if () =
         )
       empty_slot_env Int64.minus_one [] 0 0
     )
-    ([IMov (Reg RAX, Const 3L);
-      ICmp (Reg RAX, Const 1L);
-      IJe ("if_false_1");
+    ([IMov (Reg RAX, Const 3L)] @
+      check_rax_is_type_instr 1L Int64.minus_one @
+      [ICmp (Reg RAX, Const 1L);
+      IJe ("if_false_0_1");
       IMov (Reg RAX, Const 8L);
-      IJmp ("done_1");
-      ILabel ("if_false_1");
-      IMov (Reg RAX, Const 8L); 
-      IMov (Ptr (RSP, 1L), Reg RAX); 
-      IMov (Reg RAX, Const 4L) ; 
-      IMov (Ptr (RSP, 2L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 1L));
-      IAdd (Reg RAX, Ptr (RSP, 2L));
-      ILabel ("done_1");
+      IJmp ("done_0_1");
+      ILabel ("if_false_0_1");
+      IMov (Reg RAX, Const 8L)] @
+      check_rax_is_type_instr 0L Int64.minus_one @
+      [IMov (Ptr (RBP, Int64.minus_one), Reg RAX); 
+      IMov (Reg RAX, Const 4L)] @
+      check_rax_is_type_instr 0L (Int64.sub 0L 2L) @
+      [IMov (Ptr (RBP, (Int64.sub 0L 2L)), Reg RAX)] @
+      [
+        IPush (Reg RSI) ;
+        IPush (Reg RDI) ;
+        IMov (Reg RDI, Ptr (RBP, Int64.minus_one)) ;
+        IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 2L))) ;
+        ICall "check_overflow_add" ;
+        IPop (Reg RDI) ;
+        IPop (Reg RSI) ;
+      ] @
+      [IMov (Reg RAX, Ptr (RBP, Int64.minus_one));
+      IAdd (Reg RAX, Ptr (RBP, (Int64.sub 0L 2L)));
+      ILabel ("done_0_1");
      ])
 
 let test_compile_compound () = 
@@ -578,36 +796,41 @@ let test_compile_compound () =
           3)), 
         1)) empty_slot_env Int64.minus_one [] 0 0)
     ([IMov (Reg RAX, Const 3L);
-      IMov (Ptr(RSP, 1L), Reg RAX);
+      IMov (Ptr(RBP, Int64.minus_one), Reg RAX);
       IMov (Reg RAX, Const 20L);
-      IMov (Ptr(RSP, 2L), Reg RAX);
-      IMov (Reg RAX, Const 40L);
-      IMov (Ptr(RSP, 3L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 1L));
-      IMov (Ptr(RSP, 4L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 3L));
-      ICmp (Reg RAX, Ptr (RSP, 4L));
-      IJg ("if_false_7");
+      IMov (Ptr(RBP, (Int64.sub 0L 2L)), Reg RAX);
+      IMov (Reg RAX, Const 40L)] @
+      check_rax_is_type_instr 0L (Int64.sub 0L 3L) @
+      [IMov (Ptr(RBP, (Int64.sub 0L 3L)), Reg RAX);
+      IMov (Reg RAX, Ptr (RBP, Int64.minus_one))] @
+      check_rax_is_type_instr 0L (Int64.sub 0L 4L) @
+      [IMov (Ptr(RBP, (Int64.sub 0L 4L)), Reg RAX);
+      IMov (Reg RAX, Ptr (RBP, (Int64.sub 0L 3L)));
+      ICmp (Reg RAX, Ptr (RBP, (Int64.sub 0L 4L)));
+      IJg ("if_false_0_7");
       IMov (Reg RAX, Const 3L);
-      IJmp ("done_7");
-      ILabel ("if_false_7");
+      IJmp ("done_0_7");
+      ILabel ("if_false_0_7");
       IMov (Reg RAX, Const 1L);
-      ILabel ("done_7");
-      ICmp (Reg RAX, Const 1L);
-      IJe ("skip_6");
-      IMov (Ptr(RSP, 3L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 1L));
-      IMov (Ptr (RSP, 4L), Reg RAX);
-      IMov (Reg RAX, Ptr (RSP, 3L));
-      IAnd (Reg RAX, Ptr (RSP, 4L));
-      ILabel ("skip_6");
-      ICmp (Reg RAX, Const 1L);
-      IJe ("if_false_5");
+      ILabel ("done_0_7")] @
+      check_rax_is_type_instr 1L (Int64.sub 0L 3L) @
+      [ICmp (Reg RAX, Const 1L);
+      IJe ("skip_0_6");
+      IMov (Ptr(RBP, (Int64.sub 0L 3L)), Reg RAX);
+      IMov (Reg RAX, Ptr (RBP, Int64.minus_one))] @
+      check_rax_is_type_instr 1L (Int64.sub 0L 4L) @
+      [IMov (Ptr (RBP, (Int64.sub 0L 4L)), Reg RAX);
+      IMov (Reg RAX, Ptr (RBP, (Int64.sub 0L 3L)));
+      IAnd (Reg RAX, Ptr (RBP, (Int64.sub 0L 4L)));
+      ILabel ("skip_0_6")] @
+      check_rax_is_type_instr 1L (Int64.sub 0L 3L) @
+      [ICmp (Reg RAX, Const 1L);
+      IJe ("if_false_0_5");
       IMov (Reg RAX, Const 200L);
-      IJmp ("done_5");
-      ILabel ("if_false_5");
+      IJmp ("done_0_5");
+      ILabel ("if_false_0_5");
       IMov (Reg RAX, Const 3L);
-      ILabel ("done_5");
+      ILabel ("done_0_5");
      ])
 
 let test_error_III () =
@@ -664,6 +887,7 @@ let ocaml_tests = [
   ] ;
   "constructor", [
     test_case "A stack pointer constructor" `Quick test_constructor_rsp_pointer ;
+    test_case "A base pointer constructor" `Quick test_constructor_rbp_pointer ;
     test_case "A const constructor" `Quick test_constructor_const ;
     test_case "A mov arg to arg constructor" `Quick test_constructor_imov_arg_arg;
     test_case "A mov const to arg constructor" `Quick test_constructor_imov_arg_const;
@@ -710,14 +934,24 @@ let ocaml_tests = [
   "compile", [
     test_case "compile a num" `Quick test_compile_num;
     test_case "compile a bool" `Quick test_compile_bool;
-    test_case "compile a add1" `Quick test_compile_add1;
+    test_case "int type checking" `Quick test_check_rax_is_type_int;
+    test_case "bool type checking" `Quick test_check_rax_is_type_bool;
+    test_case "compile an add1" `Quick test_compile_add1;
     test_case "compile a sub1" `Quick test_compile_sub1;
     test_case "compile a not" `Quick test_compile_not;
     test_case "compile a +" `Quick test_compile_add;
+    test_case "compile a -" `Quick test_compile_sub;
+    test_case "compile a *" `Quick test_compile_mul;
+    test_case "compile a /" `Quick test_compile_div;
     test_case "compile a &&" `Quick test_compile_and;
+    test_case "compile a <=" `Quick test_compile_lte;
     test_case "compile a let" `Quick test_compile_let;
-    test_case "compile a if" `Quick test_compile_if;
+    test_case "compile an if" `Quick test_compile_if;
     test_case "compile a compound" `Quick test_compile_compound;
+    test_case "compile a print of int" `Quick test_compile_print_int;
+    test_case "compile a print of bool" `Quick test_compile_print_bool;
+    test_case "compile a function definition" `Quick test_compile_func_def;
+    test_case "compile a function application" `Quick test_compile_func_app
   ];
   "errors", [
     test_case "Addition of true" `Quick test_error_III ;

@@ -209,8 +209,8 @@ let rec string_of_tag_expr(e : tag texpr) : string =
   | TApply (nm, args, tag) -> sprintf "(tag_%d %s (%s))" tag nm (String.concat " " (List.map string_of_tag_expr args)) 
 
 (* Transforms a binary bool-bool operation to a list of instruction type structures *)
-let binop_boolean_to_instr_list (second_arg_eval : instruction list) (tag : int) (skip_value : bool) : instruction list =
-  let skip_label = sprintf "skip_%d" tag in
+let binop_boolean_to_instr_list (second_arg_eval : instruction list) (tag : int) (tag_fun : int) (skip_value : bool) : instruction list =
+  let skip_label = sprintf "skip_%d_%d" tag_fun tag in
   [iCmp_arg_const rax (bool_to_int skip_value)]
   @ [i_je skip_label]
   @ second_arg_eval
@@ -290,7 +290,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     in
     compiled_e1
     @ (begin match op with
-        | And -> binop_boolean_to_instr_list second_arg_eval tag false
+        | And -> binop_boolean_to_instr_list second_arg_eval tag tag_fun false
         | Add | Sub | Lte -> second_arg_eval
         | Mul -> second_arg_eval @ [iSar rax 1L]
         | Div -> second_arg_eval @ [iSal rax 1L]
@@ -306,7 +306,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     let else_label = sprintf "if_false_%d_%d" tag_fun tag in
     let done_label = sprintf "done_%d_%d" tag_fun tag in
     let compile_e (e : tag texpr) : instruction list = compile_expr e slot_env slot fenv tag_fun total_params in
-    (compile_e cond) @
+    (compile_e cond) @ (check_rax_is_bool_instr slot) @
     [
       iCmp_arg_const rax (bool_to_int false);
       i_je else_label
