@@ -1,0 +1,6 @@
+NAME: add_neg
+DESCRIPTION: add two numbers
+SRC:
+(+ -20 2)
+EXPECTED:
+|INTERPRET

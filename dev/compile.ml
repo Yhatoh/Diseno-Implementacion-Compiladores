@@ -202,7 +202,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) : inst
   
   match e with 
   | TId (s, _) -> [iMov_arg_to_RAX (rsp_pointer (slot_env_lookup s slot_env))]
-  | TNum (n, _) -> [iMov_const_to_RAX (Int64.shift_left n 1)]
+  | TNum (n, _) -> [iMov_const_to_RAX (Int64.mul n 2L)]
   | TBool (b, _) -> [iMov_const_to_RAX (bool_to_int b)]
   | TPrim1 (op, n, _) -> compile_prim1 op n
   | TLet (x, v, e, _) -> compile_let x v e
