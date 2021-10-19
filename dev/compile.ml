@@ -3,8 +3,17 @@ open Asm
 open Printf
 open Regsandstack
 
+let add_int_tag : int64 = 4L
+let mul_div_shift_correction : int64 = 2L
+let bool_tag : int64 = 2L
+let int_tag : int64 = 0L
+let tup_tag : int64 = 1L
+
+let true_bit_int_64 : int64 = 4L
+let false_bit_int_64 : int64 = 0L
+
 let bool_to_int (b : bool) : int64 =
-  if b then 3L else 1L
+  (Int64.add bool_tag (if b then true_bit_int_64 else false_bit_int_64))
 
 let rsp_pointer (slot : int64) : arg = Ptr (RSP, slot)
 let rbp_pointer (slot : int64) : arg = Ptr (RBP, slot)
@@ -12,20 +21,20 @@ let rbp_pointer (slot : int64) : arg = Ptr (RBP, slot)
 
 (* Type checking of operations*)
 let check_rax_is_type_instr (tp : int64) (slot : int64) : instruction list =
-  let label = if tp = 0L then "error_not_number" else "error_not_boolean" in
+  let label = if tp = int_tag then "error_not_number" else "error_not_boolean" in
   [
     iMov_arg_arg (rbp_pointer slot) rax;
-    iAnd_arg_const rax 1L;
+    iAnd_arg_const rax bool_tag;
     iCmp_arg_const rax tp;
     iMov_arg_to_RAX (rbp_pointer slot);
     i_jne label
   ]
 
 let check_rax_is_int_instr (slot : int64) : instruction list = 
-  check_rax_is_type_instr 0L slot
+  check_rax_is_type_instr int_tag slot
 
 let check_rax_is_bool_instr (slot : int64) : instruction list = 
-  check_rax_is_type_instr 1L slot
+  check_rax_is_type_instr bool_tag slot
  
 let type_of_unops (operation : prim1) (slot : int64) : instruction list =
   match operation with
@@ -37,6 +46,7 @@ let type_of_binops (operation : prim2) (slot : int64) : instruction list =
   match operation with
   | Add | Sub | Mul | Div | Lte -> check_rax_is_int_instr slot
   | And -> check_rax_is_bool_instr slot
+  | Get -> []
 
 (* Protocol for setting stack before and after a function execution *)
 let function_start (n_local_vars : int64) : instruction list =
@@ -78,6 +88,19 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
   let compile_lte_with_tag (rax : arg) (rbp_ptr : arg) : instruction list =
     compile_lte rax rbp_ptr tag tag_fun
   in
+  let compile_get (rax : arg) (rbp_ptr : arg) : instruction list =
+    [iSub_arg_const rax 1L] @
+    [iCmp_arg_const rbp_ptr 0L] @
+    [IJl "index_too_low"] @
+    (*[iCmp_arg_arg rbp_ptr (Ptr(RAX, 0L))] @
+    [IJge "index_too_high"] @
+    TODO: *)
+    [iSar rbp_ptr 2L] @
+    [iAdd_arg_const rbp_ptr 1L] @
+    [iSal rbp_ptr 3L] @
+    [iAdd_arg_arg rax rbp_ptr] @
+    [iMov_arg_to_RAX (Ptr(RAX, 0L))]
+  in
   let builder =
     match op with
     | Add -> as_list iAdd_arg_arg
@@ -86,6 +109,7 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
     | Div -> as_list iDiv_arg_arg
     | And -> as_list iAnd_arg_arg
     | Lte -> compile_lte_with_tag
+    | Get -> compile_get
   in
   builder rax rbp_ptr
 
@@ -119,6 +143,7 @@ type 'a texpr =
   | TLet of string * 'a texpr * 'a texpr * 'a
   | TIf of 'a texpr * 'a texpr * 'a texpr * 'a
   | TApply of string * 'a texpr list * 'a
+  | TTuple of 'a texpr list * 'a
 
 type 'a tfun_def =
   | TDefFun of string * string list * 'a texpr * 'a
@@ -159,6 +184,18 @@ let tag_expr (e : expr) : tag texpr =
       in
       let (tagged_args, next_tag) = tag_list args cur in
       (TApply(f_name, tagged_args, cur), next_tag)
+    | Tuple(attrs) ->
+      (* DUPLICATION ALARM *)
+      let rec tag_list (es : expr list) (sub_cur : tag) =
+        match es with
+        | [] -> ([], sub_cur)
+        | hd :: tl ->
+          let (tagged_hd, next_tag1) = help hd (sub_cur + 1) in
+          let (tagged_tl, next_tag2) = tag_list tl next_tag1 in
+          (tagged_hd :: tagged_tl, next_tag2)
+      in
+      let (tagged_attrs, next_tag) = tag_list attrs cur in
+      (TTuple(tagged_attrs, cur), next_tag)
   in
   let (tagged, _) = help e 1 in tagged;;
 
@@ -182,7 +219,23 @@ let rec count_exprs (e : tag texpr) : int64 =
   | TPrim1 (_, n, _) -> add1_i64 (count_exprs n)
   | TPrim2 (_, e1, e2, _) -> add1_i64 (max (count_exprs e1) (count_exprs e2))
   | TIf (cond, thn, els, _) -> add1_i64 (max (max (count_exprs cond) (count_exprs thn)) (count_exprs els))
-  | TApply _ | TId _ | TBool _ | TNum _ -> 1L
+  | TId _ | TBool _ | TNum _ -> 1L
+  | TApply (_, args, _) ->
+    let rec count_tuple_exprs (e_list : tag texpr list) : int64 =
+      match e_list with
+      | [] -> 0L
+      | hd::tl -> max (count_exprs hd) (count_tuple_exprs tl)
+    in
+    count_tuple_exprs args
+  | TTuple (attrs, _) ->
+    let rec count_tuple_exprs (e_list : tag texpr list) : int64 =
+      match e_list with
+      | [] -> 0L
+      | hd::tl -> max (count_exprs hd) (count_tuple_exprs tl)
+    in
+    count_tuple_exprs attrs
+
+      
 
 (* Pretty printing - used by testing framework *)
 let rec string_of_tag_expr(e : tag texpr) : string = 
@@ -206,7 +259,8 @@ let rec string_of_tag_expr(e : tag texpr) : string =
     | Lte -> "<=") (string_of_tag_expr e1) (string_of_tag_expr e2)
   | TLet (x, e1, e2, tag) -> sprintf "(tag_%d let (%s %s) %s)" tag x (string_of_tag_expr e1) (string_of_tag_expr e2) 
   | TIf (e1, e2, e3, tag) -> sprintf "(tag_%d if %s %s %s)" tag (string_of_tag_expr e1) (string_of_tag_expr e2) (string_of_tag_expr e3)
-  | TApply (nm, args, tag) -> sprintf "(tag_%d %s (%s))" tag nm (String.concat " " (List.map string_of_tag_expr args)) 
+  | TApply (nm, args, tag) -> sprintf "(tag_%d %s (%s))" tag nm (String.concat " " (List.map string_of_tag_expr args))
+  | TTuple (attrs, tag) -> sprintf "(tag_%d %s)" tag (String.concat " " (List.map string_of_tag_expr attrs))
 
 (* Transforms a binary bool-bool operation to a list of instruction type structures *)
 let binop_boolean_to_instr_list (second_arg_eval : instruction list) (tag : int) (tag_fun : int) (skip_value : bool) : instruction list =
@@ -276,7 +330,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     ] in
     let safe_env_checker : instruction list =
       match op with
-      | And | Lte -> []
+      | And | Lte | Get -> []
       | Add -> check_over_under_flow "check_overflow_add"
       | Sub ->check_over_under_flow "check_overflow_sub"
       | Mul -> check_over_under_flow "check_overflow_mul"
@@ -294,8 +348,12 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     @ (begin match op with
         | And -> binop_boolean_to_instr_list second_arg_eval tag tag_fun false
         | Add | Sub | Lte -> second_arg_eval
-        | Mul -> second_arg_eval @ [iSar rax 1L]
-        | Div -> second_arg_eval @ [iSal rax 1L]
+        | Mul -> second_arg_eval @ [iSar rax mul_div_shift_correction]
+        | Div -> second_arg_eval @ [iSal rax mul_div_shift_correction]
+        | Get -> second_arg_eval (* falta check de la tupla *)
+                 
+
+
       end)
   in
   let compile_let (x : string) (v : tag texpr) (e : tag texpr) : instruction list =
@@ -344,17 +402,32 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     @ remove_params_7_to_m
     @ pop_first_6_args
   in
+  let compile_tuple (attrs : tag texpr list) : instruction list =
+    let rec compile_lexpr (lst : tag texpr list) (param_pos : int) : instruction list =
+      match lst with
+      | [] -> []
+      | hd::tl -> (compile_expr hd slot_env slot fenv tag_fun total_params) @
+                  [iMov_arg_arg (Ptr (R15, (Int64.of_int param_pos))) rax] @
+                  (compile_lexpr tl (param_pos + 1))
+    in
+    [iMov_arg_const (Ptr (R15, 0L)) (Int64.of_int (4 * (List.length attrs)))] @
+    (compile_lexpr attrs 1) @
+    [iMov_arg_to_RAX r15] @
+    [iAdd_arg_const rax 1L] @
+    [iAdd_arg_const r15 (Int64.of_int (8 * ((List.length attrs) + 1)))]
+  in
 
   (* Main compile instruction here *)
   match e with 
   | TId (s, _) -> compile_tid s
-  | TNum (n, _) -> [iMov_const_to_RAX (Int64.mul n 2L)]
+  | TNum (n, _) -> [iMov_const_to_RAX (Int64.mul n add_int_tag)]
   | TBool (b, _) -> [iMov_const_to_RAX (bool_to_int b)]
   | TPrim1 (op, n, _) -> compile_prim1 op n
   | TLet (x, v, e, _) -> compile_let x v e
   | TPrim2 (op, n1, n2, tag) -> compile_prim2 op n1 n2 tag
   | TIf(cond, thn, els, tag) -> compile_if cond thn els tag
   | TApply(nm, args, _) -> compile_apply nm args
+  | TTuple(attrs, _) -> compile_tuple attrs 
     
   (*| _ -> failwith "TO BE DONE!"*)
 
@@ -385,6 +458,11 @@ let compile_prog p : string =
   let (intrs_funs, cfenv)  = (compile_funcs tagged_funcs empty_comp_fenv) in 
   let n_lets_main = count_exprs tagged_main in
   let instrs_main = function_start n_lets_main @ compile_expr tagged_main empty_slot_env Int64.minus_one cfenv 0 0 @ function_end in
+  let init_heap = "
+  mov R15, RDI
+  add R15, 7
+  mov R11, 0xfffffffffffffff8
+  and R15, R11" in
   let prelude ="
 section .text
 extern check_overflow_add
@@ -392,6 +470,7 @@ extern check_overflow_sub
 extern check_overflow_mul
 extern check_div_by_0
 extern typeError
+extern indexError
 extern print
 global our_code_starts_here
 our_code_starts_here:" in
@@ -407,5 +486,13 @@ error_not_boolean:
   push RDI
   mov RSI, RAX
   mov RDI, 0x2
-  call typeError" in
-  prelude ^ pp_instrs (instrs_main)^ pp_instrs intrs_funs ^ error_section
+  call typeError
+index_too_high:
+  push RDI
+  mov RDI, [RAX]
+  call indexError
+index_too_low:
+  push RDI
+  mov RDI, 0
+  call indexError" in
+  prelude ^ init_heap ^ pp_instrs (instrs_main)^ pp_instrs intrs_funs ^ error_section

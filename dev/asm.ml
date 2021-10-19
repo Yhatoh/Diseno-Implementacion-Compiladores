@@ -11,6 +11,8 @@ type reg =
 | RCX
 | R8
 | R9
+| R15
+| R11
 
 
 (* arguments for instructions *)
@@ -28,6 +30,8 @@ let rdx = Reg RDX
 let rcx = Reg RCX
 let r8 = Reg R8
 let r9 = Reg R9
+let r11 = Reg R11
+let r15 = Reg R15
 
 
 (* asm instructions *)
@@ -125,12 +129,14 @@ let pp_reg reg : string =
   | RCX -> "RCX"
   | R8 -> "R8"
   | R9 -> "R9"
+  | R11 -> "R11"
+  | R15 -> "R15"
 
 let pp_arg arg : string =
   match arg with
   | Const n -> sprintf "%#Lx" n
   | Reg r -> pp_reg r
-  | Ptr (r, n) -> sprintf "[%s %s]" (pp_reg r) (pp_int (Int64.mul 8L n))
+  | Ptr (r, n) -> sprintf "qword[%s %s]" (pp_reg r) (pp_int (Int64.mul 8L n))
 
 let pp_instr instr : string =
   match instr with

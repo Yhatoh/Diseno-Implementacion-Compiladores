@@ -1,0 +1,64 @@
+section .text
+extern check_overflow_add
+extern check_overflow_sub
+extern check_overflow_mul
+extern check_div_by_0
+extern typeError
+extern indexError
+extern print
+global our_code_starts_here
+our_code_starts_here:
+  mov R15, RDI
+  add R15, 7
+  mov R11, 0xfffffffffffffff8
+  and R15, R11
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x10
+  mov qword[R15 + 0], 0xc
+  mov RAX, 0x18
+  mov qword[R15 + 8], RAX
+  mov RAX, 0x1c
+  mov qword[R15 + 16], RAX
+  mov RAX, 0x20
+  mov qword[R15 + 24], RAX
+  mov RAX, R15
+  add RAX, 0x1
+  add R15, 0x20
+  mov qword[RBP - 8], RAX
+  mov RAX, 0
+  mov qword[RBP - 16], RAX
+  mov RAX, qword[RBP - 8]
+  sub RAX, 0x1
+  cmp qword[RBP - 16], 0
+  jl index_too_low
+  cmp qword[RBP - 16], qword[RAX + 0]
+  jge index_too_high
+  sar qword[RBP - 16], 0x2
+  add qword[RBP - 16], 0x1
+  sal qword[RBP - 16], 0x3
+  add RAX, qword[RBP - 16]
+  mov RAX, qword[RAX + 0]
+  mov RSP, RBP
+  pop RBP
+  ret
+error_not_number:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x1
+  call typeError
+error_not_boolean:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x2
+  call typeError
+index_too_high:
+  push RDI
+  mov RDI, [RAX]
+  call indexError
+index_too_low:
+  push RDI
+  mov RDI, 0
+  call indexError

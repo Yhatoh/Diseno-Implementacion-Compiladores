@@ -156,9 +156,9 @@ let rec interp expr env fenv =
     let vals = List.map (fun e -> interp e env fenv) args in
     (match lookup_fenv name fenv with
     | DefFun (_, params, body) -> 
-      interp body (extend_env params vals env) fenv
-    | DefSys (_, arg_types, ret_type) ->
-      check_type ret_type @@ interp_sys name (List.map2 check_type arg_types vals))
+      interp body (extend_env params vals env) fenv)
+    (*| DefSys (_, arg_types, ret_type) ->
+      check_type ret_type @@ interp_sys name (List.map2 check_type arg_types vals)) *)
   | Tuple exprs -> 
           TupleV (ref (List.map (fun e -> interp e env fenv) exprs))
   | Set (e,k,v) ->
