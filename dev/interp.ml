@@ -7,12 +7,42 @@ exception RTError of string
 type value = 
   | NumV of int64
   | BoolV of bool
+  | TupleV of value list ref
 
 (* Pretty printing *)
-let string_of_val(v : value) : string =
+let rec string_of_val(v : value) : string =
 match v with
 | NumV n -> Int64.to_string n
 | BoolV b -> if b then "true" else "false"
+| TupleV vals -> 
+        let rec string_of_val_list =
+            fun ls -> (match ls with
+            | [] -> ""
+            | e::l -> " " ^ string_of_val e ^ string_of_val_list l) in 
+        "(tup"^(string_of_val_list !vals)^")"
+
+(* Lexical Environment *)
+type env = (string * value) list
+let empty_env : env = []
+
+let extend_env (names : string list) (vals : value list) (env : env) : env =
+  let param_vals = List.combine names vals in
+  List.fold_left (fun env p -> p :: env) env param_vals
+
+let lookup_env : string -> env -> value =
+  fun s env ->
+    match List.assoc_opt s env with
+    | Some v -> v
+    | None -> raise (RTError (Printf.sprintf "Unbound identifier: %s" s))
+
+(* Function Environment *)
+type fenv = fundef list
+let empty_fenv : fenv = []
+let rec lookup_fenv : string -> fenv -> fundef =
+  fun s fenv -> 
+    match fenv with
+    | [] -> raise (RTError (Printf.sprintf "Undefined function: %s" s))
+    | (f::fs) -> if fundef_name f = s then f else lookup_fenv s fs
 
 (* Lifting functions on OCaml primitive types to operate on language values *)
 let liftIII : (int64 -> int64 -> int64) -> value -> value -> value =
@@ -40,41 +70,50 @@ let liftBB : (bool -> bool) -> value -> value =
     (* REMEMBER MAKE TYPE CHECK HERE *)
     | _ -> failwith "runtime type error"
   
+
+let get_elem : value -> value -> value =
+    fun v1 v2 ->
+        match v1, v2 with
+        | TupleV ts, NumV n -> 
+                (try List.nth !ts (Int64.to_int n)
+                with
+                | Failure msg -> raise (RTError msg)
+                | RTError msg -> raise (RTError msg)
+                | e -> raise (RTError ("unknown error in get elem:"^ Printexc.to_string e )))
+        | _ -> raise (RTError (Printf.sprintf "Expected tuple in first position and integer in second position, but got %s and %s" (string_of_val v1) (string_of_val v2)))
+
+let rec change : 'a list -> int -> int -> 'a -> 'a list =
+    fun es index n v -> 
+        if index == n 
+        then v :: (List.tl es)
+        else (List.hd es) :: change (List.tl es) (1 + index) n v
+
+let set_elem : value -> value -> value -> value = 
+    fun v1 v2 v3 -> 
+        match v1,v2 with
+        | TupleV ts, NumV n -> 
+                ts := change !ts 0 (Int64.to_int n) v3 ; TupleV ts
+        | _ -> raise (RTError (Printf.sprintf "Expected tuple in first position and integer in second position, but got %s and %s" (string_of_val v1) (string_of_val v2)))
+
 (* Sys functions *)
 let defs_prelude : fundef list = [
   (*DefSys ("print", [CAny], CAny) ;
   DefSys ("max", [CInt ; CInt], CInt) *)
 ]
 
-(* Lexical Environment *)
-type env = (string * value) list
-let empty_env : env = []
-
-let extend_env (names : string list) (vals : value list) (env : env) : env =
-  let param_vals = List.combine names vals in
-  List.fold_left (fun env p -> p :: env) env param_vals
-
-let lookup_env : string -> env -> value =
-  fun s env ->
-    match List.assoc_opt s env with
-    | Some v -> v
-    | None -> raise (RTError (Printf.sprintf "Unbound identifier: %s" s))
-
-(* Function Environment *)
-type fenv = fundef list
-let empty_fenv : fenv = []
-let rec lookup_fenv : string -> fenv -> fundef =
-  fun s fenv -> 
-    match fenv with
-    | [] -> raise (RTError (Printf.sprintf "Undefined function: %s" s))
-    | (f::fs) -> if fundef_name f = s then f else lookup_fenv s fs
 
 (* check that the value is of the given type, return the value if ok *)
-let check_type (t : ctype) (v : value) : value =
+let rec check_type (t : ctype) (v : value) : value =
     match v, t with
     | NumV _, CInt | BoolV _, CBool | _, CAny -> v
-    | NumV _, CBool -> raise (RTError (Printf.sprintf "Expected boolean but got %s" (string_of_val v)))
-    | BoolV _, CInt -> raise (RTError (Printf.sprintf "Expected integer but got %s" (string_of_val v)))
+    | TupleV vals, CTuple types -> 
+            let _ = List.map2 check_type types !vals in
+            v
+    | NumV _, _ -> raise (RTError (Printf.sprintf "Expected boolean but got %s" (string_of_val v)))
+    | BoolV _, _ -> raise (RTError (Printf.sprintf "Expected integer but got %s" (string_of_val v)))
+    | TupleV _,_ -> raise (RTError (Printf.sprintf "Expected tuple but got %s" (string_of_val v)))
+            
+
 
 (* provide a dummy (non-C) interpretation of sys functions print and max *)
 let interp_sys name vals = 
@@ -106,7 +145,8 @@ let rec interp expr env fenv =
     | Mul -> liftIII ( Int64.mul ) 
     | Div -> liftIII ( Int64.div ) 
     | And -> liftBBB ( && ) 
-    | Lte -> liftIIB ( <= )) (interp e1 env fenv) (interp e2 env fenv)
+    | Lte -> liftIIB ( <= ) 
+    | Get -> get_elem) (interp e1 env fenv) (interp e2 env fenv)
   | Let (x, e , b) -> interp b (extend_env [x] [(interp e env fenv)] env) fenv
   | If (e1, e2, e3) -> 
     (match interp e1 env fenv with
@@ -117,8 +157,14 @@ let rec interp expr env fenv =
     (match lookup_fenv name fenv with
     | DefFun (_, params, body) -> 
       interp body (extend_env params vals env) fenv
-    (*| DefSys (_, arg_types, ret_type) ->
-      check_type ret_type @@ interp_sys name (List.map2 check_type arg_types vals)*))
+    | DefSys (_, arg_types, ret_type) ->
+      check_type ret_type @@ interp_sys name (List.map2 check_type arg_types vals))
+  | Tuple exprs -> 
+          TupleV (ref (List.map (fun e -> interp e env fenv) exprs))
+  | Set (e,k,v) ->
+          let t = (interp e env fenv) in
+          let i = (interp k env fenv) in
+          set_elem t i (interp v env fenv)
 
 let interp_prog prog env =
   let defs, expr = prog in

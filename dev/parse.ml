@@ -9,8 +9,10 @@ let rec parse_exp (sexp : sexp) : expr =
   match sexp with
   | `Atom "true" -> Bool true
   | `Atom "false" -> Bool false
+  | `Atom "tup" -> Tuple []
   | `Atom s -> (
     match Int64.of_string_opt s with Some n -> Num n | None -> Id s )
+  | `List (`Atom "tup" :: exprs) -> Tuple (List.map parse_exp exprs)
   | `List [eop; e] -> (
     match eop with 
     | `Atom "add1" -> Prim1 (Add1, parse_exp e)
@@ -32,10 +34,12 @@ let rec parse_exp (sexp : sexp) : expr =
     | `Atom "/" -> Prim2 (Div, parse_exp e1, parse_exp e2)
     | `Atom "and" -> Prim2 (And, parse_exp e1, parse_exp e2)
     | `Atom "<=" -> Prim2 (Lte, parse_exp e1, parse_exp e2)
+    | `Atom "get" -> Prim2 (Get, parse_exp e1, parse_exp e2)
     | `Atom name -> Apply (name, [parse_exp e1 ; parse_exp e2])
     | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
     )
   | `List [`Atom "if"; e1; e2; e3] -> If (parse_exp e1, parse_exp e2, parse_exp e3)
+  | `List [ `Atom "set"; e; k; v ] -> Set (parse_exp e, parse_exp k, parse_exp v)
   | `List (`Atom name :: e2) -> Apply (name, List.map parse_exp e2)
   | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
 
