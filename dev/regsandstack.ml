@@ -54,6 +54,12 @@ let store_first_6_args : instruction list =
     (store_arg 1 (Reg RAX))
   ]
 
+let store_r10_r11 : instruction list =
+  [IPush (r10) ; IPush (r11)]
+
+let pop_r10_r11 : instruction list =
+  [IPop (r11) ; IPop (r10)]
+
 let move_arg_1_to_6 (n : int) (a : arg) : instruction =
   IMov (Reg (int_to_cc64_reg n), a)
 

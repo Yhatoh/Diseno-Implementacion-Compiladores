@@ -12,6 +12,7 @@ type reg =
 | R8
 | R9
 | R15
+| R10
 | R11
 
 
@@ -30,6 +31,7 @@ let rdx = Reg RDX
 let rcx = Reg RCX
 let r8 = Reg R8
 let r9 = Reg R9
+let r10 = Reg R10
 let r11 = Reg R11
 let r15 = Reg R15
 
@@ -129,6 +131,7 @@ let pp_reg reg : string =
   | RCX -> "RCX"
   | R8 -> "R8"
   | R9 -> "R9"
+  | R10 -> "R10"
   | R11 -> "R11"
   | R15 -> "R15"
 
@@ -145,7 +148,7 @@ let pp_instr instr : string =
   | IAdd (a1, a2) -> sprintf "  add %s, %s" (pp_arg a1) (pp_arg a2)
   | ISub (a1, a2) -> sprintf "  sub %s, %s" (pp_arg a1) (pp_arg a2)
   | IMul (a1, a2) -> sprintf "  imul %s, %s" (pp_arg a1) (pp_arg a2)
-  | IDiv (_, a2) -> sprintf "  CQO\n  idiv qword%s" (pp_arg a2) (* TODO: erase CQO instruction from here *)
+  | IDiv (_, a2) -> sprintf "  idiv %s" (pp_arg a2) (* TODO: erase CQO instruction from here *)
   | IAnd (a1, a2) -> sprintf "  and %s, %s" (pp_arg a1) (pp_arg a2)
   | IXor (a1, a2) -> sprintf "  xor %s, %s" (pp_arg a1) (pp_arg a2)
   | IOr (a1, a2) -> sprintf "  or %s, %s" (pp_arg a1) (pp_arg a2)

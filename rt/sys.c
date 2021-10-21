@@ -8,6 +8,7 @@ typedef int64_t u64;
 
 extern u64 our_code_starts_here() asm("our_code_starts_here");
 
+void print_value(u64 value);
 
 // Print copied from lecture about function definitions.
 const u64 BOOL_TAG   = 0x2;
@@ -16,36 +17,34 @@ const u64 BOOL_FALSE = BOOL_TAG; // as chosen in compile.ml
 const u64 ARITHMETIC_SHIFT_VAL = 0x4;
 const u64 LOGICAL_SHIFT_VAL = 0x2;
 
-u64 print(u64 val) {
-  if ((val & BOOL_TAG) == 0) { // val is even ==> number
-    printf("> %ld\n", ((int64_t)(val)) / ARITHMETIC_SHIFT_VAL); // shift bits right to remove tag
-  } else if (val & BOOL_TRUE) {
-    printf("> true\n");
-  } else if (val & BOOL_FALSE) {
-    printf("> false\n");
-  } else {
-    printf("> %" PRId64 "\n", val); // print unknown val in hex
-  }
-  return val;
-}
-
+const u64 ERROR_NOT_TUPLE = 3LL;
 const u64 ERROR_NOT_BOOLEAN = 2LL;
 const u64 ERROR_NOT_NUMBER = 1LL;
 
 void typeError(u64 type, u64 givenValue) {
   if (type == ERROR_NOT_NUMBER)
-    printf("Expected integer, but got %s.\n", (((givenValue & BOOL_TRUE) >> LOGICAL_SHIFT_VAL) ? "true" : "false"));
+    printf("Expected integer, but got ");
   else if (type == ERROR_NOT_BOOLEAN)
-    printf("Expected boolean, but got %" PRId64 ".\n", givenValue / ARITHMETIC_SHIFT_VAL);
+    printf("Expected boolean, but got ");
+  else
+    printf("Expected tuple, but got ");
+
+  print_value(givenValue);
+  printf("\n");
   exit(type);
 }
 
-void indexError(u64 givenValue) {
-  if (givenValue == 0)
-    printf("Index too low, minimum index is %" PRId64 ".\n", givenValue / ARITHMETIC_SHIFT_VAL);
-  else
-    printf("Index too high, maximum index is %" PRId64 ".\n", (givenValue / ARITHMETIC_SHIFT_VAL) - 1);
-  exit(givenValue);
+void indexError(u64 index, u64 sizeTuple) {
+  if(sizeTuple == 0){
+    printf("Tuple is empty, size tuple is 0\n");
+    exit(8);
+  } else if (index >= sizeTuple){
+    printf("Index too high, maximum index is %" PRId64 ".\n", (sizeTuple / ARITHMETIC_SHIFT_VAL) - 1);
+    exit(7);
+  } else {
+    printf("Index too low, minimum index is 0.\n");
+    exit(6);
+  }
 }
 
 u64 safe = 1;
@@ -115,6 +114,75 @@ void check_div_by_0(u64 a1){
   }
 }
 
+void print_tuple(u64 result){
+  uint64_t* tuplePtr = (uint64_t*)(result - 1);
+  u64 size = (*tuplePtr / ARITHMETIC_SHIFT_VAL);
+  printf("(tup");
+  for(u64 i = 1; i <= size; i++){
+    printf(" ");
+    u64 tupleI = *(tuplePtr + i);
+    print_value(tupleI);
+    /*
+    u64 check = tupleI & 2LL;
+    if(check){
+      tupleI >>= LOGICAL_SHIFT_VAL;
+      if(tupleI & 1LL){
+        printf("true");
+      } else {
+        printf("false");
+      }
+    } else if (tupleI & 1LL) { // is tuple
+      print_tuple(tupleI);
+    } else {
+      tupleI /= ARITHMETIC_SHIFT_VAL;
+      printf("%" PRId64 "", tupleI);
+    }
+    */
+  }
+  printf(")"); 
+}
+
+void print_value(u64 value){
+  u64 check = value & 2LL;
+  if(check){
+    value >>= LOGICAL_SHIFT_VAL;
+    if(value & 1LL){
+      printf("true");
+    } else {
+      printf("false");
+    }
+  } else if (value & 1LL) { // is tuple
+    print_tuple(value);
+  } else {
+    value /= ARITHMETIC_SHIFT_VAL;
+    printf("%" PRId64 "", value);
+  }
+}
+
+u64 print(u64 val) {
+  //printf("> DEBUG %" PRId64 "\n", val);
+  printf("> ");
+  print_value(val);
+  printf("\n");
+  /*
+  if ((val & BOOL_TAG) == 0) { // val is even ==> number
+    if(val & 1LL){
+      printf("> ");
+      print_tuple(val);
+      printf("\n");
+    } else { 
+      printf("> %ld\n", ((int64_t)(val)) / ARITHMETIC_SHIFT_VAL); // shift bits right to remove tag
+    }
+  } else if ((val & BOOL_TRUE) / ARITHMETIC_SHIFT_VAL) {
+    printf("> true\n");
+  } else if ((val & BOOL_FALSE)) {
+    printf("> false\n");
+  } else {
+    printf("> %" PRId64 "\n", val); // print unknown val in hex
+  }
+  */
+  return val;
+}
 
 int main(int argc, char** argv) {
   char* flag = "-safe";
@@ -126,7 +194,8 @@ int main(int argc, char** argv) {
   uint64_t *heap = calloc(1024, sizeof(uint64_t));
 
   u64 result = our_code_starts_here(heap);
-
+  print_value(result);
+  /*
   u64 check = result & 2LL;
   if(check){
     result >>= LOGICAL_SHIFT_VAL;
@@ -136,10 +205,13 @@ int main(int argc, char** argv) {
       printf("false\n");
     }
   } else if (result & 1LL) { // is tuple
-    printf("tuple!");
+    print_tuple(result);
+    printf("\n");
   } else {
     result /= ARITHMETIC_SHIFT_VAL;
     printf("%" PRId64 "\n", result);
   }
+  */
+  free(heap);
   return 0;
 }
