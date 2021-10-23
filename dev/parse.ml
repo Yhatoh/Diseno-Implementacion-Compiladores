@@ -19,7 +19,7 @@ let rec parse_exp (sexp : sexp) : expr =
     | `Atom "sub1" -> Prim1 (Sub1, parse_exp e)
     | `Atom "not" -> Prim1 (Not, parse_exp e)
     | `Atom "print" -> Prim1 (Print, parse_exp e)  (* comment out this line if providing print via the sys interface *)
-    | `Atom name -> Apply (name, [parse_exp e])
+    | `Atom name -> Apply ((String.concat "_" (String.split_on_char '-' name)), [parse_exp e])
     | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
     )
   | `List [eop; e1; e2] -> (
@@ -43,6 +43,15 @@ let rec parse_exp (sexp : sexp) : expr =
   | `List (`Atom name :: e2) -> Apply (name, List.map parse_exp e2)
   | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
 
+let rec create_deffun (name : string) (atris : string list) (pos : int64) : fundef list =
+  match atris with
+  | [] -> []
+  | hd::tl ->
+    DefFun (name ^ "_" ^ hd, ["t"], Prim2(Get, Id "t", Num(pos)))::(create_deffun name tl (Int64.add pos 1L))
+
+let create_id (a : string) : expr =
+  Id(a)
+
 let rec parse_prog (sexp : sexp) : prog =
   match sexp with
   | `List (hd :: tl) -> (
@@ -51,6 +60,12 @@ let rec parse_prog (sexp : sexp) : prog =
       let (funcdefs, expr) = parse_prog (`List tl) in
       let arg_names = List.map parse_arg_name args in
       [ DefFun (name, arg_names, parse_exp body) ] @ funcdefs, expr
+    | `List (`Atom "record" :: (`Atom name :: atris)), _ ->
+      let (funcdefs, expr) = parse_prog (`List tl) in
+      let atris_names = List.map parse_arg_name atris in 
+      [ DefFun (name, atris_names, Tuple((List.map create_id atris_names))) ] 
+      @ (create_deffun name atris_names 0L) 
+      @ funcdefs, expr
     (*| `List (`Atom "defsys" :: `Atom name :: arg_spec), _ -> (
       match List.rev arg_spec with
       | (ret :: `Atom "->" :: args) -> 

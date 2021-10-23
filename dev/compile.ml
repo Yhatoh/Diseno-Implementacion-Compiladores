@@ -43,6 +43,7 @@ let check_rax_is_bool_instr (slot : int64) : instruction list =
  
 let check_rax_is_tuple_instr (slot : int64) : instruction list =
   check_rax_is_type_instr tup_tag slot
+
 let type_of_unops (operation : prim1) (slot : int64) : instruction list =
   match operation with
   | Add1 | Sub1 -> check_rax_is_int_instr slot
@@ -103,7 +104,7 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
     [iPush r11] @
     [iMov_arg_arg r10 rax] @
     [iMov_arg_arg rax r10] @
-    (check_rax_is_tuple_instr slot) @
+    (check_rax_is_tuple_instr (Int64.sub slot 1L)) @
     [iSub_arg_const r10 1L] @
     [iMov_arg_arg r11 rbp_ptr] @
     [iMov_arg_arg rax rbp_ptr] @
@@ -140,12 +141,12 @@ let unop_to_instr_list (op: prim1) : instruction list =
   let iNot_arg_list (a : arg) : instruction list = [iNot_arg a ; iAdd_arg_const a 1L] in
   let iPrint_arg_list (a : arg) : instruction list = 
     store_r10_r11 @
+    store_first_6_args @
     [
-      store_arg 1 rax ;
       move_arg_1_to_6 1 a ;
       iCall_print ;
-      pop_arg 1; 
-    ] @ 
+    ]@
+    pop_first_6_args @
     pop_r10_r11 
   in
   let builder =
@@ -254,7 +255,7 @@ let rec count_exprs (e : tag texpr) : int64 =
     let rec count_tuple_exprs (e_list : tag texpr list) : int64 =
       match e_list with
       | [] -> 0L
-      | hd::tl -> max (count_exprs hd) (count_tuple_exprs tl)
+      | hd::tl -> Int64.add (count_exprs hd) (count_tuple_exprs tl)
     in
     count_tuple_exprs args
   | TTuple (attrs, _) ->
@@ -322,17 +323,20 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
   in
   let compile_prim1 (op: prim1) (n: tag texpr) : instruction list =
     let compiled_n = (compile_expr n slot_env slot fenv tag_fun total_params) in
-    let check_over_under_flow (checker_name : string) : instruction list = [
-      iMov_arg_arg (rbp_pointer slot) rax;
-      iPush rsi; 
-      iPush rdi; 
-      iMov_arg_arg rdi rax; 
-      iMov_arg_const rsi 2L ; 
-      iCall checker_name ; 
-      iPop rdi ;
-      iPop rsi;
-      iMov_arg_arg rax (rbp_pointer slot)
-    ] in
+    let check_over_under_flow (checker_name : string) : instruction list = 
+      store_r10_r11 @
+      store_first_6_args @
+      [
+        iMov_arg_arg rdi rax; 
+        iMov_arg_const rsi 2L ; 
+        iCall checker_name ; 
+        iPop rdi ;
+        iPop rsi;
+        iMov_arg_arg rax (rbp_pointer slot)
+      ]@
+      pop_first_6_args @
+      pop_r10_r11 
+    in
     (compiled_n) @ (type_of_unops op slot)
     @ (begin match op with
         | Add1 -> check_over_under_flow "check_overflow_add"
@@ -345,28 +349,32 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     let compile_e (n : tag texpr) (slot : int64): instruction list = compile_expr n slot_env slot fenv tag_fun total_params in
     let compiled_e1 = compile_e n1 slot @ type_of_binops op slot in
     let compiled_e2 = compile_e n2 next_slot @ type_of_binops op next_slot in 
-    let check_over_under_flow (checker_name : string) : instruction list = [
-      iPush rsi; 
-      iPush rdi; 
-      iMov_arg_arg rdi rbp_ptr; 
-      iMov_arg_arg rsi (rbp_pointer next_slot) ; 
-      iCall checker_name ; 
-      iPop rdi ;
-      iPop rsi
-    ] in
-    let check_zero_division : instruction list = [
-      iPush rsi; 
-      iPush rdi; 
-      iMov_arg_arg rdi (rbp_pointer next_slot) ; 
-      iCall ("check_div_by_0") ; 
-      iPop rdi;
-      iPop rsi
-    ] in
+    let check_over_under_flow (checker_name : string) : instruction list =   
+      store_r10_r11 @
+      store_first_6_args @
+      [
+        iMov_arg_arg rdi rbp_ptr; 
+        iMov_arg_arg rsi (rbp_pointer next_slot) ; 
+        iCall checker_name ;
+      ]@
+      pop_first_6_args @
+      pop_r10_r11 
+    in
+    let check_zero_division : instruction list = 
+      store_first_6_args @
+      store_r10_r11 @
+      [
+        iMov_arg_arg rdi (rbp_pointer next_slot) ; 
+        iCall ("check_div_by_0") ; 
+      ] @
+      pop_first_6_args @
+      pop_r10_r11 
+    in
     let safe_env_checker : instruction list =
       match op with
       | And | Lte | Get -> []
       | Add -> check_over_under_flow "check_overflow_add"
-      | Sub ->check_over_under_flow "check_overflow_sub"
+      | Sub -> check_over_under_flow "check_overflow_sub"
       | Mul -> check_over_under_flow "check_overflow_mul"
       | Div -> check_zero_division
     in
@@ -410,24 +418,29 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
   let compile_apply (nm : string) (args : tag texpr list) : instruction list =
     let largs = List.length args in
     let (_, _) = lookup_comp_fenv nm largs fenv in
-    let compile_and_push (e : tag texpr) : instruction list =
-      compile_expr e slot_env slot fenv tag_fun total_params @ [iPush rax]
-    in 
-    let compile_and_move (e : tag texpr) (n_param) : instruction list =
-      compile_expr e slot_env slot fenv tag_fun total_params @ [(move_arg_1_to_6 n_param rax)]
-    in 
+    let compile_and_save (e : tag texpr) (slot : int64) : instruction list =
+      compile_expr e slot_env slot fenv tag_fun total_params
+    in
+    let rec compiles_and_save (args : tag texpr list)(slot : int64) : instruction list =
+      match args with
+      | [] -> []
+      | hd::tl -> 
+        (compile_and_save hd slot) @ [iMov_arg_arg (rbp_pointer slot) rax] @ (compiles_and_save tl (Int64.sub slot 1L))
+    in
     let rec compiles_and_push (args : tag texpr list) (actual_param : int) : instruction list =
       (*let n_param = List.length args in*) 
       match args with
       | [] -> []
-      | hd::tl -> 
-        (compiles_and_push tl (actual_param + 1)) 
-        @ (if actual_param > 6 then (compile_and_push hd) else (compile_and_move hd actual_param))
+      | _::tl -> 
+        compiles_and_push tl (actual_param + 1) @
+        [iMov_arg_to_RAX (rbp_pointer (Int64.sub slot (Int64.of_int (actual_param - 1))))]
+        @ (if actual_param > 6 then [iPush rax] else [(move_arg_1_to_6 actual_param rax)])
     in
     let remove_params_7_to_m : instruction list =
       if largs > 6 then [(iAdd_arg_const rsp (Int64.of_int (8 * (largs - 6))))] else []
     in
-    (store_r10_r11) 
+    compiles_and_save args slot
+    @ (store_r10_r11) 
     @ (store_first_6_args) 
     @ (compiles_and_push args 1) 
     @ [iCall nm] 
@@ -531,7 +544,7 @@ let rec compile_funcs (func_list : tag tfun_def list) (cfenv : comp_fenv) : inst
 let compile_prog p : string =
   (*let _, e = p in*)
   let (tagged_funcs, tagged_main) = tag_prog p in
-  let (intrs_funs, cfenv)  = (compile_funcs tagged_funcs empty_comp_fenv) in 
+  let (intrs_funs, cfenv)  = (compile_funcs tagged_funcs (("type_mismatch", [])::empty_comp_fenv)) in 
   let n_lets_main = count_exprs tagged_main in
   let instrs_main = function_start n_lets_main @ compile_expr tagged_main empty_slot_env Int64.minus_one cfenv 0 0 @ function_end in
   let init_heap = "

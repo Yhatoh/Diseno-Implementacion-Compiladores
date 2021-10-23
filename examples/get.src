@@ -1,0 +1,11 @@
+(
+  (record point3d x y z)
+  (def (addpoint3d p1 p2)
+    (point3d (print (+ p1 p2))
+           (print (+ p1 p2))
+           (print (+ p1 p2))
+    )
+  )
+  (let (p (point3d 1 1 1))
+    (addpoint3d 1 1))
+)

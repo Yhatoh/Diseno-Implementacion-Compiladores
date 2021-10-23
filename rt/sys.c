@@ -122,22 +122,6 @@ void print_tuple(u64 result){
     printf(" ");
     u64 tupleI = *(tuplePtr + i);
     print_value(tupleI);
-    /*
-    u64 check = tupleI & 2LL;
-    if(check){
-      tupleI >>= LOGICAL_SHIFT_VAL;
-      if(tupleI & 1LL){
-        printf("true");
-      } else {
-        printf("false");
-      }
-    } else if (tupleI & 1LL) { // is tuple
-      print_tuple(tupleI);
-    } else {
-      tupleI /= ARITHMETIC_SHIFT_VAL;
-      printf("%" PRId64 "", tupleI);
-    }
-    */
   }
   printf(")"); 
 }
@@ -164,23 +148,6 @@ u64 print(u64 val) {
   printf("> ");
   print_value(val);
   printf("\n");
-  /*
-  if ((val & BOOL_TAG) == 0) { // val is even ==> number
-    if(val & 1LL){
-      printf("> ");
-      print_tuple(val);
-      printf("\n");
-    } else { 
-      printf("> %ld\n", ((int64_t)(val)) / ARITHMETIC_SHIFT_VAL); // shift bits right to remove tag
-    }
-  } else if ((val & BOOL_TRUE) / ARITHMETIC_SHIFT_VAL) {
-    printf("> true\n");
-  } else if ((val & BOOL_FALSE)) {
-    printf("> false\n");
-  } else {
-    printf("> %" PRId64 "\n", val); // print unknown val in hex
-  }
-  */
   return val;
 }
 
@@ -195,23 +162,7 @@ int main(int argc, char** argv) {
 
   u64 result = our_code_starts_here(heap);
   print_value(result);
-  /*
-  u64 check = result & 2LL;
-  if(check){
-    result >>= LOGICAL_SHIFT_VAL;
-    if(result & 1LL){
-      printf("true\n");
-    } else {
-      printf("false\n");
-    }
-  } else if (result & 1LL) { // is tuple
-    print_tuple(result);
-    printf("\n");
-  } else {
-    result /= ARITHMETIC_SHIFT_VAL;
-    printf("%" PRId64 "\n", result);
-  }
-  */
+  printf("\n");
   free(heap);
   return 0;
 }

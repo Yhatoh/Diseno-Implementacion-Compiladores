@@ -1,3 +1,5 @@
+dune exec execs/run_compile.exe examples/print.src
+
 section .text
 extern check_overflow_add
 extern check_overflow_sub
@@ -15,30 +17,415 @@ our_code_starts_here:
   push RBP
   mov RBP, RSP
   sub RSP, 0x10
-  mov qword[R15 + 0], 0xc
-  mov RAX, 0x18
-  mov qword[R15 + 8], RAX
-  mov RAX, 0x1c
-  mov qword[R15 + 16], RAX
-  mov RAX, 0x20
-  mov qword[R15 + 24], RAX
-  mov RAX, R15
-  add RAX, 0x1
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, 0x4
+  mov RDX, RAX
+  mov RAX, 0x4
+  mov RSI, RAX
+  mov RAX, 0x4
+  mov RDI, RAX
+  call point3d
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  mov qword[RBP - 8], RAX
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, qword[RBP - 8]
+  mov RSI, RAX
+  mov RAX, qword[RBP - 8]
+  mov RDI, RAX
+  call addpoint3d
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  mov RSP, RBP
+  pop RBP
+  ret
+point3d:
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x10
+  push R11
+  mov R11, R15
+  mov qword[R11 + 0], 0xc
   add R15, 0x20
+  mov RAX, RDI
+  mov qword[R11 + 8], RAX
+  mov RAX, RSI
+  mov qword[R11 + 16], RAX
+  mov RAX, RDX
+  mov qword[R11 + 24], RAX
+  mov RAX, R11
+  add RAX, 0x1
+  pop R11
+  add R15, 0x7
+  push R11
+  mov R11, 0xfffffffffffffff8
+  and R15, R11
+  pop R11
+  mov RSP, RBP
+  pop RBP
+  ret
+point3d_x:
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x10
+  mov RAX, RDI
   mov qword[RBP - 8], RAX
   mov RAX, 0
   mov qword[RBP - 16], RAX
   mov RAX, qword[RBP - 8]
-  sub RAX, 0x1
-  cmp qword[RBP - 16], 0
+  push R10
+  push R11
+  mov R10, RAX
+  mov RAX, R10
+  mov qword[RBP - 24], RAX
+  and RAX, 0x3
+  cmp RAX, 0x1
+  mov RAX, qword[RBP - 24]
+  jne error_not_tuple
+  sub R10, 0x1
+  mov R11, qword[RBP - 16]
+  mov RAX, qword[RBP - 16]
+  mov qword[RBP - 16], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 16]
+  jne error_not_number
+  mov R11, qword[RBP - 16]
+  cmp R11, 0
   jl index_too_low
-  cmp qword[RBP - 16], qword[RAX + 0]
+  cmp R11, qword[R10 + 0]
   jge index_too_high
-  sar qword[RBP - 16], 0x2
-  add qword[RBP - 16], 0x1
-  sal qword[RBP - 16], 0x3
+  sar R11, 0x2
+  add R11, 0x1
+  sal R11, 0x3
+  add R10, R11
+  mov RAX, qword[R10 + 0]
+  pop R11
+  pop R10
+  mov RSP, RBP
+  pop RBP
+  ret
+point3d_y:
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x10
+  mov RAX, RDI
+  mov qword[RBP - 8], RAX
+  mov RAX, 0x4
+  mov qword[RBP - 16], RAX
+  mov RAX, qword[RBP - 8]
+  push R10
+  push R11
+  mov R10, RAX
+  mov RAX, R10
+  mov qword[RBP - 24], RAX
+  and RAX, 0x3
+  cmp RAX, 0x1
+  mov RAX, qword[RBP - 24]
+  jne error_not_tuple
+  sub R10, 0x1
+  mov R11, qword[RBP - 16]
+  mov RAX, qword[RBP - 16]
+  mov qword[RBP - 16], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 16]
+  jne error_not_number
+  mov R11, qword[RBP - 16]
+  cmp R11, 0
+  jl index_too_low
+  cmp R11, qword[R10 + 0]
+  jge index_too_high
+  sar R11, 0x2
+  add R11, 0x1
+  sal R11, 0x3
+  add R10, R11
+  mov RAX, qword[R10 + 0]
+  pop R11
+  pop R10
+  mov RSP, RBP
+  pop RBP
+  ret
+point3d_z:
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x10
+  mov RAX, RDI
+  mov qword[RBP - 8], RAX
+  mov RAX, 0x8
+  mov qword[RBP - 16], RAX
+  mov RAX, qword[RBP - 8]
+  push R10
+  push R11
+  mov R10, RAX
+  mov RAX, R10
+  mov qword[RBP - 24], RAX
+  and RAX, 0x3
+  cmp RAX, 0x1
+  mov RAX, qword[RBP - 24]
+  jne error_not_tuple
+  sub R10, 0x1
+  mov R11, qword[RBP - 16]
+  mov RAX, qword[RBP - 16]
+  mov qword[RBP - 16], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 16]
+  jne error_not_number
+  mov R11, qword[RBP - 16]
+  cmp R11, 0
+  jl index_too_low
+  cmp R11, qword[R10 + 0]
+  jge index_too_high
+  sar R11, 0x2
+  add R11, 0x1
+  sal R11, 0x3
+  add R10, R11
+  mov RAX, qword[R10 + 0]
+  pop R11
+  pop R10
+  mov RSP, RBP
+  pop RBP
+  ret
+addpoint3d:
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x10
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  ;
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, RDI
+  mov RDI, RAX
+  call point3d_z
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  ;
+  mov qword[RBP - 8], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 8]
+  jne error_not_number
+  mov qword[RBP - 8], RAX
+  ;
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, RSI
+  mov RDI, RAX
+  call point3d_z
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  ;
+  mov qword[RBP - 16], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 16]
+  jne error_not_number
+  mov qword[RBP - 16], RAX
+  push RSI
+  push RDI
+  mov RDI, qword[RBP - 8]
+  mov RSI, qword[RBP - 16]
+  call check_overflow_add
+  pop RDI
+  pop RSI
+  mov RAX, qword[RBP - 8]
   add RAX, qword[RBP - 16]
-  mov RAX, qword[RAX + 0]
+  mov RDX, RAX
+  ;
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, RDI
+  mov RDI, RAX
+  call point3d_y
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  ;
+  mov qword[RBP - 8], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 8]
+  jne error_not_number
+  mov qword[RBP - 8], RAX
+  ;
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, RSI
+  mov RDI, RAX
+  call point3d_y
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  ;
+  mov qword[RBP - 16], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 16]
+  jne error_not_number
+  mov qword[RBP - 16], RAX
+  push RSI
+  push RDI
+  mov RDI, qword[RBP - 8]
+  mov RSI, qword[RBP - 16]
+  call check_overflow_add
+  pop RDI
+  pop RSI
+  mov RAX, qword[RBP - 8]
+  add RAX, qword[RBP - 16]
+  mov RSI, RAX
+  ;
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, RDI
+  mov RDI, RAX
+  call point3d_x
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  ;
+  mov qword[RBP - 8], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 8]
+  jne error_not_number
+  mov qword[RBP - 8], RAX
+  ;
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RAX, RSI
+  mov RDI, RAX
+  call point3d_x
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  ;
+  mov qword[RBP - 16], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 16]
+  jne error_not_number
+  mov qword[RBP - 16], RAX
+  push RSI
+  push RDI
+  mov RDI, qword[RBP - 8]
+  mov RSI, qword[RBP - 16]
+  call check_overflow_add
+  pop RDI
+  pop RSI
+  mov RAX, qword[RBP - 8]
+  add RAX, qword[RBP - 16]
+  mov RDI, RAX
+  call point3d
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
   mov RSP, RBP
   pop RBP
   ret
@@ -54,11 +441,22 @@ error_not_boolean:
   mov RSI, RAX
   mov RDI, 0x2
   call typeError
-index_too_high:
+error_not_tuple:
+  push RSI
   push RDI
-  mov RDI, [RAX]
+  mov RSI, RAX
+  mov RDI, 0x3
+  call typeError
+index_too_high:
+  push RSI
+  push RDI
+  mov RDI, R11
+  mov RSI, [R10]
   call indexError
 index_too_low:
+  push RSI
   push RDI
+  mov RDI, R11
+  mov RSI, [R10]
   mov RDI, 0
   call indexError

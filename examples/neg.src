@@ -1,1 +1,5 @@
-(get false 2)
+(
+	(record point2d x y)
+	(record point3d x y z)
+	(point2d-y (point3d 1 2 3))
+)
