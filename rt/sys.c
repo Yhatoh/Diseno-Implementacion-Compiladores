@@ -55,6 +55,20 @@ void DEBUG(u64 a){
   printf("> DEBUG %" PRId64 "\n", a);
 }
 
+void check_overflow(char *operation_string, u64 a1, u64 a2) {
+  if(safe){
+    u64 real_a1 = a1 / ARITHMETIC_SHIFT_VAL;
+    u64 real_a2 = a2 / ARITHMETIC_SHIFT_VAL;
+    if((real_a2 < 0) && (INT_MIN_OUR - real_a2 > real_a1)){
+      printf("(%s %" PRId64 " %" PRId64 ") will produce underflow.\n", operation_string, real_a1, real_a2);
+      exit(4);
+    } else if((real_a2 > 0) && (INT_MAX_OUR - real_a2 < real_a1)){
+      printf("(+ %" PRId64 " %" PRId64 ") will produce overflow.\n", real_a1, real_a2);
+      exit(3);
+    }
+  }
+}
+
 void check_overflow_add(u64 a1, u64 a2){
   if(safe){
     u64 real_a1 = a1 / ARITHMETIC_SHIFT_VAL;

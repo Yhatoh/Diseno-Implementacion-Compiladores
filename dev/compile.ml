@@ -104,13 +104,6 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
     let ret_fn (arg1 : arg) (arg2 : arg) : instruction list = [fn arg1 arg2] in
     ret_fn
   in
-
-  (*let compile_add : instruction list =
-    (as_list iAdd_arg_arg) rax rbp_ptr
-  let compile_sub : instruction list =
-    (as_list iSub_arg_arg) rax rbp_ptr
-  let compile_mul : instruction list =
-    (as_list iMul_arg_arg) rax rbp_ptr*)
   let compile_div (e1 : arg) (e2 : arg) : instruction list =
     [ICqo; iDiv_arg_arg e1 e2]
   in
@@ -124,26 +117,30 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
       IJl "index_too_low" ;
       iCmp_arg_arg r11 r10_ptr ;
       IJge "index_too_high"
-    ]
-    in
-    [iPush r10] @
-    [iPush r11] @
-    [iMov_arg_arg r10 rax] @
-    [iMov_arg_to_RAX r10] @(*[iMov_arg_arg rax r10] @*)
+    [
+      iPush r10 ;
+      iPush r11 ;
+      iMov_arg_arg r10 rax
+      (*iMov_arg_to_RAX r10*)
+    ] @(*[iMov_arg_arg rax r10] @*)
     (check_rax_is_tuple_instr (Int64.sub slot 1L)) @
-    [iSub_arg_const r10 1L] @
-    [iMov_arg_arg r11 rbp_ptr] @
-    [iMov_arg_to_RAX rbp_ptr] @(*[iMov_arg_arg rax rbp_ptr] @*)
+    [
+      iSub_arg_const r10 1L ;
+      iMov_arg_arg r11 rbp_ptr ;
+      iMov_arg_to_RAX rbp_ptr
+    ] @(*[iMov_arg_arg rax rbp_ptr] @*)
     (check_rax_is_int_instr slot) @
     [iMov_arg_arg r11 rbp_ptr] @
     check_index_range @
-    [iSar r11 2L] @
-    [iAdd_arg_const r11 1L] @
-    [iSal r11 3L] @
-    [iAdd_arg_arg r10 r11] @
-    [iMov_arg_to_RAX r10_ptr] @
-    [iPop r11] @
-    [iPop r10] 
+    [
+      iSar r11 2L ;
+      iAdd_arg_const r11 1L ;
+      iSal r11 3L ;
+      iAdd_arg_arg r10 r11 ;
+      iMov_arg_to_RAX r10_ptr ;
+      iPop r11 ;
+      iPop r10
+    ] 
   in
   let builder =
     match op with
@@ -168,7 +165,7 @@ let unop_to_instr_list (op: prim1) : instruction list =
     [
       move_arg_1_to_6 1 a ;
       iCall_print ;
-    ]@
+    ] @
     pop_first_6_args @
     pop_r10_r11 
   in
@@ -324,10 +321,12 @@ let rec string_of_tag_expr(e : tag texpr) : string =
 (* Transforms a binary bool-bool operation to a list of instruction type structures *)
 let binop_boolean_to_instr_list (second_arg_eval : instruction list) (tag : int) (tag_fun : int) (skip_value : bool) : instruction list =
   let skip_label = sprintf "skip_%d_%d" tag_fun tag in
-  [iCmp_arg_const rax (bool_to_int skip_value)]
-  @ [i_je skip_label]
-  @ second_arg_eval
-  @ [i_label skip_label]
+  [
+    iCmp_arg_const rax (bool_to_int skip_value) ;
+    i_je skip_label
+  ] @
+  second_arg_eval @
+  [i_label skip_label]
 
 (* Main compile function.
     arguments:
@@ -367,7 +366,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
         iPop rdi ;
         iPop rsi;
         iMov_arg_arg rax (rbp_pointer slot)
-      ]@
+      ] @
       pop_first_6_args @
       pop_r10_r11 
     in
