@@ -125,6 +125,7 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
       iCmp_arg_arg r11 r10_ptr ;
       IJge "index_too_high"
     ]
+    in
     [iPush r10] @
     [iPush r11] @
     [iMov_arg_arg r10 rax] @
@@ -158,9 +159,9 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
 
 (* Transforms a unary operation to a list of instruction type structures *)
 let unop_to_instr_list (op: prim1) : instruction list =
-  let iAdd1_arg_list (a : arg) : instruction list = [iAdd_arg_const a 2L] in
-  let iSub1_arg_list (a : arg) : instruction list = [iSub_arg_const a 2L] in
-  let iNot_arg_list (a : arg) : instruction list = [iNot_arg a ; iAdd_arg_const a 1L] in
+  let iAdd1_arg_list (a : arg) : instruction list = [iAdd_arg_const a 4L] in
+  let iSub1_arg_list (a : arg) : instruction list = [iSub_arg_const a 4L] in
+  let iNot_arg_list (a : arg) : instruction list = [iNot_arg a ; iAdd_arg_const a 2L] in
   let iPrint_arg_list (a : arg) : instruction list = 
     store_r10_r11 @
     store_first_6_args @
@@ -477,7 +478,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
       if largs > 6 then [(iAdd_arg_const rsp (Int64.of_int (8 * (largs - 6))))] else []
     in
     (*compiles_and_save args slot*)
-    @ (store_r10_r11) 
+    (store_r10_r11) 
     @ (store_first_6_args) 
     @ (compiles_and_push args 1) 
     @ [iCall nm] 
@@ -605,6 +606,8 @@ let rec compile_funcs (func_list : tag tfun_def list) (cfenv : comp_fenv) : inst
 
 (* Prints the program p (given in abstract Scheme syntax) in NASM code. *)
 let compile_prog p : string =
+  (*Printf.sprintf "%s\n" (string_of_prog p)*)
+
   (*let _, e = p in*)
   let (tagged_funcs, tagged_main) = tag_prog p in
   let (intrs_funs, cfenv)  = (compile_funcs tagged_funcs (("type_mismatch", [])::empty_comp_fenv)) in 

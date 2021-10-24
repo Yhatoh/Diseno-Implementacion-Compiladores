@@ -15,37 +15,35 @@ let a_normal_form_binop (op : prim2) (arg1 : expr) (arg2 : expr) : expr =
 
 let a_normal_form_ids (arg_list : expr list) : expr list * string list =
   let rec arg_ids_strings (n : int) : string list =
-    if n = 0 then [] else (printf "arg%s" n) :: arg_ids_strings (n - 1)
+    if n = 0 then [] else (sprintf "arg%s" (string_of_int n)) :: arg_ids_strings (n - 1)
   in
 
   let len_arg_list = List.length arg_list in
-  let ids_strs = arg_ids_strings arg_list in
+  let ids_strs = arg_ids_strings len_arg_list in
   let arg_ids_exprs : expr list = List.map (fun s -> Id s) ids_strs in
   (arg_ids_exprs, ids_strs)
 
 (* Applies ANF to a function application. *)
 let a_normal_form_apply (f_name : string) (arg_list : expr list) : expr =
-  let (arg_ids_exprs, ids_strs) = a_normal_form_ids arg_list
+  let (arg_ids_exprs, ids_strs) = a_normal_form_ids arg_list in
 
-  let assign_id_and_execute (f_name : string) (args : expr list) (id_exprs : expr list) (id_strs : string list) : expr =
-    match id_exprs with
+  let rec assign_id_and_execute (f_name : string) (args : expr list) (id_exprs : expr list) (id_strs : string list) : expr =
+    match id_strs with
     | [] -> Apply (f_name, id_exprs)
-    | id_hd::id_tl -> let s_hd::s_tl = id_strs in
-                    let a_hd::a_tl = args in
-                      Let (s_hd, id_hd, assign_id_and_execute f_name a_tl id_tl id_strs)
+    | s_hd::s_tl ->
+      let a_hd::a_tl = args in
+      Let (s_hd, a_hd, assign_id_and_execute f_name a_tl id_exprs s_tl)
   in
-
   assign_id_and_execute f_name arg_list arg_ids_exprs ids_strs
 
 let a_normal_form_tuple (attr_list : expr list) : expr =
-  let (arg_ids_exprs, ids_strs) = a_normal_form_ids attr_list
+  let (arg_ids_exprs, ids_strs) = a_normal_form_ids attr_list in
 
-  let assign_id_and_execute (args : expr list) (id_exprs : expr list) (id_strs : string list) : expr =
-    match id_exprs with
+  let rec assign_id_and_execute (args : expr list) (id_exprs : expr list) (id_strs : string list) : expr =
+    match id_strs with
     | [] -> Tuple id_exprs
-    | id_hd::id_tl -> let s_hd::s_tl = id_strs in
-                    let a_hd::a_tl = args in
-                      Let (s_hd, id_hd, assign_id_and_execute a_tl id_tl id_strs)
+    | s_hd::s_tl ->let a_hd::a_tl = args in
+                   Let (s_hd, a_hd, assign_id_and_execute a_tl id_exprs s_tl)
   in
 
   assign_id_and_execute attr_list arg_ids_exprs ids_strs
@@ -66,7 +64,7 @@ let rec parse_exp (sexp : sexp) : expr =
     | `Atom "sub1" -> Prim1 (Sub1, parse_exp e)
     | `Atom "not" -> Prim1 (Not, parse_exp e)
     | `Atom "print" -> Prim1 (Print, parse_exp e)  (* comment out this line if providing print via the sys interface *)
-    | `Atom name -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name) [parse_exp e] (*Apply ((String.concat "_" (String.split_on_char '-' name)), [parse_exp e])*)
+    | `Atom name -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name)) [parse_exp e] (*Apply ((String.concat "_" (String.split_on_char '-' name)), [parse_exp e])*)
     | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
     )
   | `List [eop; e1; e2] -> (

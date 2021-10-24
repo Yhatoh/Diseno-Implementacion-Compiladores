@@ -1,5 +1,4 @@
 (
-	(record point2d x y)
-	(record point3d x y z)
-	(point2d-y (point3d 1 2 3))
+  (def (f x) (let (arg1 1) (let (arg2 x) (+ arg1 arg2))))
+  (let (arg1 1) (f arg1))
 )

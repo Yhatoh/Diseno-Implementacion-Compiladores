@@ -14,7 +14,7 @@ void print_value(u64 value);
 const u64 BOOL_TAG   = 0x2;
 const u64 BOOL_TRUE  = 0x6; // These must be the same values
 const u64 BOOL_FALSE = BOOL_TAG; // as chosen in compile.ml
-const u64 ARITHMETIC_SHIFT_VAL = 0x4;
+const u64 ARITHMETIC_SHIFT_VAL = 4;
 const u64 LOGICAL_SHIFT_VAL = 0x2;
 
 const u64 ERROR_NOT_TUPLE = 3LL;
@@ -30,7 +30,7 @@ void typeError(u64 type, u64 givenValue) {
     printf("Expected tuple, but got ");
 
   print_value(givenValue);
-  printf("\n");
+  printf(".\n");
   exit(type);
 }
 
@@ -48,8 +48,12 @@ void indexError(u64 index, u64 sizeTuple) {
 }
 
 u64 safe = 1;
-const u64 INT_MAX_OUR = 4611686018427387903 / 2;
-const u64 INT_MIN_OUR = -4611686018427387904 / 2;
+const u64 INT_MAX_OUR = 2305843009213693951;
+const u64 INT_MIN_OUR = -2305843009213693952;
+
+void DEBUG(u64 a){
+  printf("> DEBUG %" PRId64 "\n", a);
+}
 
 void check_overflow_add(u64 a1, u64 a2){
   if(safe){
@@ -144,7 +148,6 @@ void print_value(u64 value){
 }
 
 u64 print(u64 val) {
-  //printf("> DEBUG %" PRId64 "\n", val);
   printf("> ");
   print_value(val);
   printf("\n");
