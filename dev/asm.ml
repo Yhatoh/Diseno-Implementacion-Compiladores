@@ -118,7 +118,9 @@ let iCall_error_not_boolean = iCall "error_not_boolean"
 
 
 let pp_int (num : int64) : string =
-  if num >= 0L then (sprintf "+ %Ld" num) else (sprintf "- %Ld" (Int64.mul Int64.minus_one num))
+  if num > 0L then (sprintf " + %Ld" num) 
+  else (if num < 0L then (sprintf " - %Ld" (Int64.mul Int64.minus_one num))
+        else "")
 
 let pp_reg reg : string =
   match reg with
@@ -139,7 +141,7 @@ let pp_arg arg : string =
   match arg with
   | Const n -> sprintf "%#Lx" n
   | Reg r -> pp_reg r
-  | Ptr (r, n) -> sprintf "qword[%s %s]" (pp_reg r) (pp_int (Int64.mul 8L n))
+  | Ptr (r, n) -> sprintf "qword[%s%s]" (pp_reg r) (pp_int (Int64.mul 8L n))
 
 let pp_instr instr : string =
   match instr with

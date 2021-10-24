@@ -16,6 +16,8 @@ let false_bit_int_64 : int64 = 0L
 let bool_to_int (b : bool) : int64 =
   (Int64.add bool_tag (if b then true_bit_int_64 else false_bit_int_64))
 
+(*let a_normal_form_binop (binop : prim2)*)
+
 let rsp_pointer (slot : int64) : arg = Ptr (RSP, slot)
 let rbp_pointer (slot : int64) : arg = Ptr (RBP, slot)
 
@@ -35,28 +37,35 @@ let check_rax_is_type_instr (tp : int64) (slot : int64) : instruction list =
     i_jne label
   ]
 
+(* NASM code to verify that the value in RAX is an integer in our language *)
 let check_rax_is_int_instr (slot : int64) : instruction list = 
   check_rax_is_type_instr int_tag slot
 
+(* NASM code to verify that the value in RAX is a boolean in our language *)  
 let check_rax_is_bool_instr (slot : int64) : instruction list = 
   check_rax_is_type_instr bool_tag slot
  
+(* NASM code to verify that the value in RAX is a tuple in our language *)
 let check_rax_is_tuple_instr (slot : int64) : instruction list =
   check_rax_is_type_instr tup_tag slot
 
+(* Verifies that the value of the operand of a unary
+   operation has a valid type. *)
 let type_of_unops (operation : prim1) (slot : int64) : instruction list =
   match operation with
   | Add1 | Sub1 -> check_rax_is_int_instr slot
   | Not -> check_rax_is_bool_instr slot
   | Print -> []
 
+(* Verifies that the values of the operands of a binary
+   operation have valid types. *)
 let type_of_binops (operation : prim2) (slot : int64) : instruction list =
   match operation with
   | Add | Sub | Mul | Div | Lte -> check_rax_is_int_instr slot
   | And -> check_rax_is_bool_instr slot
   | Get -> []
 
-(* Protocol for setting stack before and after a function execution *)
+(* Protocol for setting stack before a function call. *)
 let function_start (n_local_vars : int64) : instruction list =
   [
     iPush rbp ;
@@ -64,6 +73,8 @@ let function_start (n_local_vars : int64) : instruction list =
     iSub_arg_const rsp (Int64.mul 8L (n_local_vars))
   ]
 
+(* Protocol for recovering scope values
+   after an internal function call returns. *)
 let function_end : instruction list =
   [
     iMov_arg_arg rsp rbp ;
@@ -93,32 +104,43 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
     let ret_fn (arg1 : arg) (arg2 : arg) : instruction list = [fn arg1 arg2] in
     ret_fn
   in
-  let compile_div (rax : arg) (rbp_ptr : arg) : instruction list =
-    [ICqo; iDiv_arg_arg rax rbp_ptr]
+
+  (*let compile_add : instruction list =
+    (as_list iAdd_arg_arg) rax rbp_ptr
+  let compile_sub : instruction list =
+    (as_list iSub_arg_arg) rax rbp_ptr
+  let compile_mul : instruction list =
+    (as_list iMul_arg_arg) rax rbp_ptr*)
+  let compile_div (e1 : arg) (e2 : arg) : instruction list =
+    [ICqo; iDiv_arg_arg e1 e2]
   in
-  let compile_lte_with_tag (rax : arg) (rbp_ptr : arg) : instruction list =
-    compile_lte rax rbp_ptr tag tag_fun
+  let compile_lte_with_tag (e1 : arg) (e2 : arg) : instruction list =
+    compile_lte e1 e2 tag tag_fun
   in
   let compile_get (rax : arg) (rbp_ptr : arg) : instruction list =
+    let r10_ptr = Ptr(R10, 0L) in
+    let check_index_range = [
+      iCmp_arg_const r11 0L ;
+      IJl "index_too_low" ;
+      iCmp_arg_arg r11 r10_ptr ;
+      IJge "index_too_high"
+    ]
     [iPush r10] @
     [iPush r11] @
     [iMov_arg_arg r10 rax] @
-    [iMov_arg_arg rax r10] @
+    [iMov_arg_to_RAX r10] @(*[iMov_arg_arg rax r10] @*)
     (check_rax_is_tuple_instr (Int64.sub slot 1L)) @
     [iSub_arg_const r10 1L] @
     [iMov_arg_arg r11 rbp_ptr] @
-    [iMov_arg_arg rax rbp_ptr] @
+    [iMov_arg_to_RAX rbp_ptr] @(*[iMov_arg_arg rax rbp_ptr] @*)
     (check_rax_is_int_instr slot) @
     [iMov_arg_arg r11 rbp_ptr] @
-    [iCmp_arg_const r11 0L] @
-    [IJl "index_too_low"] @
-    [iCmp_arg_arg r11 (Ptr(R10, 0L))] @
-    [IJge "index_too_high"] @
+    check_index_range @
     [iSar r11 2L] @
     [iAdd_arg_const r11 1L] @
     [iSal r11 3L] @
     [iAdd_arg_arg r10 r11] @
-    [iMov_arg_to_RAX (Ptr(R10, 0L))] @
+    [iMov_arg_to_RAX r10_ptr] @
     [iPop r11] @
     [iPop r10] 
   in
@@ -171,6 +193,7 @@ type 'a texpr =
   | TApply of string * 'a texpr list * 'a
   | TTuple of 'a texpr list * 'a
 
+(* Algebraic data type for tagged functions *)
 type 'a tfun_def =
   | TDefFun of string * string list * 'a texpr * 'a
 
@@ -305,12 +328,21 @@ let binop_boolean_to_instr_list (second_arg_eval : instruction list) (tag : int)
   @ second_arg_eval
   @ [i_label skip_label]
 
-(* Compile-inator *)
+(* Main compile function.
+    arguments:
+      e: expression to be compiled
+      slot_env: identifier reference environment
+      slot: the 8-byte stack slot which currently holds the lastly saved reference.
+      fenv: the functions environment
+      tag_fun:
+      total_params:
+    returns:
+      the abstract syntax of the NASM code. *)
 let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) : instruction list =
   let next_slot = (Int64.sub slot 1L) in
   let rbp_ptr = rbp_pointer slot in
   let mov_rax_to_rbp = iMov_arg_arg rbp_ptr rax in
-
+  (* Compiles the value binding to an identifier. *)
   let compile_tid (s : string) : instruction list =
     let pos_stack = slot_env_lookup s slot_env in 
     let search_var = if (0L >= pos_stack)
@@ -321,6 +353,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     in
     [iMov_arg_to_RAX (search_var)]
   in
+  (* Compiles a unary operation. *)
   let compile_prim1 (op: prim1) (n: tag texpr) : instruction list =
     let compiled_n = (compile_expr n slot_env slot fenv tag_fun total_params) in
     let check_over_under_flow (checker_name : string) : instruction list = 
@@ -345,6 +378,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
       end)
     @ (unop_to_instr_list op)
   in
+  (* Compiles a binary operation. *)
   let compile_prim2 (op : prim2) (n1 : tag texpr) (n2 : tag texpr) (tag : int) : instruction list =
     let compile_e (n : tag texpr) (slot : int64): instruction list = compile_expr n slot_env slot fenv tag_fun total_params in
     let compiled_e1 = compile_e n1 slot @ type_of_binops op slot in
@@ -356,7 +390,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
         iMov_arg_arg rdi rbp_ptr; 
         iMov_arg_arg rsi (rbp_pointer next_slot) ; 
         iCall checker_name ;
-      ]@
+      ] @
       pop_first_6_args @
       pop_r10_r11 
     in
@@ -395,12 +429,14 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
         | Get -> second_arg_eval (* falta check de la tupla *)
       end)
   in
+  (* Compiles a let binding. *)
   let compile_let (x : string) (v : tag texpr) (e : tag texpr) : instruction list =
     let new_slot_env : slot_env = extend_slot_env x slot slot_env in
       (compile_expr v slot_env slot fenv tag_fun total_params)
       @ [mov_rax_to_rbp]
       @ (compile_expr e new_slot_env next_slot fenv tag_fun total_params)
   in
+  (* Compiles an if statement *)
   let compile_if (cond : tag texpr) (thn : tag texpr) (els : tag texpr) (tag : int) : instruction list =
     let else_label = sprintf "if_false_%d_%d" tag_fun tag in
     let done_label = sprintf "done_%d_%d" tag_fun tag in
@@ -415,10 +451,11 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     @ (compile_e els)
     @ [ i_label done_label ]
   in
+  (* Compiles a function call. *)
   let compile_apply (nm : string) (args : tag texpr list) : instruction list =
     let largs = List.length args in
     let (_, _) = lookup_comp_fenv nm largs fenv in
-    let compile_and_save (e : tag texpr) (slot : int64) : instruction list =
+    (*let compile_and_save (e : tag texpr) (slot : int64) : instruction list =
       compile_expr e slot_env slot fenv tag_fun total_params
     in
     let rec compiles_and_save (args : tag texpr list)(slot : int64) : instruction list =
@@ -426,7 +463,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
       | [] -> []
       | hd::tl -> 
         (compile_and_save hd slot) @ [iMov_arg_arg (rbp_pointer slot) rax] @ (compiles_and_save tl (Int64.sub slot 1L))
-    in
+    in*)
     let rec compiles_and_push (args : tag texpr list) (actual_param : int) : instruction list =
       (*let n_param = List.length args in*) 
       match args with
@@ -439,7 +476,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     let remove_params_7_to_m : instruction list =
       if largs > 6 then [(iAdd_arg_const rsp (Int64.of_int (8 * (largs - 6))))] else []
     in
-    compiles_and_save args slot
+    (*compiles_and_save args slot*)
     @ (store_r10_r11) 
     @ (store_first_6_args) 
     @ (compiles_and_push args 1) 
@@ -448,6 +485,8 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     @ pop_first_6_args
     @ pop_r10_r11
   in
+
+  (* Compilation of tuple creation. *)
   let compile_tuple (attrs : tag texpr list) : instruction list =
     let compile_tuple_help (lst : tag texpr list) : instruction list =
       let rec compile_lexpr (lst : tag texpr list) (param_pos : int) : instruction list =
@@ -457,52 +496,74 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
                     [iMov_arg_arg (Ptr (R11, (Int64.of_int param_pos))) rax] @
                     (compile_lexpr tl (param_pos + 1))
       in
-      [iPush r11] @
-      [iMov_arg_arg r11 r15] @
-      [iMov_arg_const (Ptr (R11, 0L)) (Int64.of_int (4 * (List.length attrs)))] @
-      [iAdd_arg_const r15 (Int64.of_int (8 * (List.length attrs + 1)))] @
+      [
+        iPush r11 ;
+        iMov_arg_arg r11 r15 ;
+        iMov_arg_const (Ptr (R11, 0L)) (Int64.of_int (4 * (List.length attrs))) ;
+        iAdd_arg_const r15 (Int64.of_int (8 * (List.length attrs + 1)))
+      ] @
       (compile_lexpr lst 1) @
-      [iMov_arg_to_RAX r11] @
-      [iAdd_arg_const rax 1L] @
-      [iPop r11]
+      [
+        iMov_arg_to_RAX r11 ;
+        iAdd_arg_const rax 1L ;
+        iPop r11
+      ]
     in
     (compile_tuple_help attrs) @
-    [iAdd_arg_const r15 7L] @
-    [iPush r11] @
-    [iMov_arg_const r11 (Int64.mul Int64.minus_one 8L)] @
-    [iAnd_arg_arg r15 r11] @
-    [iPop r11]
+    [
+      iAdd_arg_const r15 7L ;
+      iPush r11 ;
+      iMov_arg_const r11 (Int64.mul Int64.minus_one 8L) ;
+      iAnd_arg_arg r15 r11 ; 
+      iPop r11
+    ]
   in
+
+  (* Compilation of the set tuple value *)
   let compile_set (t : tag texpr) (pos : tag texpr) (value : tag texpr) : instruction list =
     let compiled_t = compile_expr t slot_env slot fenv tag_fun total_params in 
     let compiled_pos = compile_expr pos slot_env next_slot fenv tag_fun total_params in
     let compiled_value = compile_expr value slot_env (Int64.sub next_slot 1L) fenv tag_fun total_params in 
+    let check_index_range = [
+      iCmp_arg_const r11 0L ;
+      IJl "index_too_low" ;
+      iCmp_arg_arg r11 (Ptr(R10, 0L)) ;
+      IJge "index_too_high"
+    ]
+    in
     compiled_t @
     (check_rax_is_tuple_instr slot) @
     compiled_pos @
-    [iMov_arg_arg (rbp_pointer next_slot) rax] @
-    [iMov_arg_arg rax (rbp_pointer next_slot)] @
+    [
+      iMov_arg_arg (rbp_pointer next_slot) rax ; 
+      iMov_arg_arg rax (rbp_pointer next_slot)
+    ] @
     (check_rax_is_int_instr next_slot) @
     compiled_value @
-    [iMov_arg_arg (rbp_pointer (Int64.sub next_slot 1L)) rax] @
-    [iPush r10] @
-    [iPush r11] @
-    [iMov_arg_arg r10 rbp_ptr] @
-    [iSub_arg_const r10 1L] @
-    [iMov_arg_arg r11 (rbp_pointer next_slot)] @
-    [iCmp_arg_const r11 0L] @
-    [IJl "index_too_low"] @
-    [iCmp_arg_arg r11 (Ptr(R10, 0L))] @
-    [IJge "index_too_high"] @
-    [iSar r11 2L] @
-    [iAdd_arg_const r11 1L] @
-    [iSal r11 3L] @
-    [iAdd_arg_arg r10 r11] @
-    [iMov_arg_arg r11 (rbp_pointer (Int64.sub next_slot 1L))] @
-    [iMov_arg_arg (Ptr(R10, 0L)) r11] @
-    [iPop r11] @
-    [iPop r10] @
-    [iMov_arg_to_RAX rbp_ptr] 
+    [
+      iMov_arg_arg (rbp_pointer (Int64.sub next_slot 1L)) rax ;
+      iPush r10 ;
+      iPush r11 ;
+      iMov_arg_arg r10 rbp_ptr ;
+      iSub_arg_const r10 1L ;
+      iMov_arg_arg r11 (rbp_pointer next_slot) 
+    ] @
+    check_index_range @
+      (*iCmp_arg_const r11 0L ;
+      IJl "index_too_low" ;
+      iCmp_arg_arg r11 (Ptr(R10, 0L)) ;
+      IJge "index_too_high" ;*)
+    [
+      iSar r11 2L ;
+      iAdd_arg_const r11 1L ;
+      iSal r11 3L ;
+      iAdd_arg_arg r10 r11 ;
+      iMov_arg_arg r11 (rbp_pointer (Int64.sub next_slot 1L)) ;
+      iMov_arg_arg (Ptr(R10, 0L)) r11 ;
+      iPop r11 ;
+      iPop r10 ;
+      iMov_arg_to_RAX rbp_ptr
+    ] 
   in
 
   (* Main compile instruction here *)
@@ -520,6 +581,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     
   (*| _ -> failwith "TO BE DONE!"*)
 
+(* Compiles the function definitions. *)
 let rec compile_funcs (func_list : tag tfun_def list) (cfenv : comp_fenv) : instruction list * comp_fenv =
   match func_list with
   | [] -> ([], cfenv)
@@ -541,6 +603,7 @@ let rec compile_funcs (func_list : tag tfun_def list) (cfenv : comp_fenv) : inst
       compd_fenv
     )
 
+(* Prints the program p (given in abstract Scheme syntax) in NASM code. *)
 let compile_prog p : string =
   (*let _, e = p in*)
   let (tagged_funcs, tagged_main) = tag_prog p in
