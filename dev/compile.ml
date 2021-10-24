@@ -9,6 +9,7 @@ let bool_tag : int64 = 2L
 let int_tag : int64 = 0L
 let tup_tag : int64 = 1L
 let type_mask : int64 = 3L
+let one : int64 = 4L
 
 let true_bit_int_64 : int64 = 4L
 let false_bit_int_64 : int64 = 0L
@@ -117,6 +118,8 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
       IJl "index_too_low" ;
       iCmp_arg_arg r11 r10_ptr ;
       IJge "index_too_high"
+    ]
+    in
     [
       iPush r10 ;
       iPush r11 ;
@@ -156,8 +159,8 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
 
 (* Transforms a unary operation to a list of instruction type structures *)
 let unop_to_instr_list (op: prim1) : instruction list =
-  let iAdd1_arg_list (a : arg) : instruction list = [iAdd_arg_const a 4L] in
-  let iSub1_arg_list (a : arg) : instruction list = [iSub_arg_const a 4L] in
+  let iAdd1_arg_list (a : arg) : instruction list = [iAdd_arg_const a one] in
+  let iSub1_arg_list (a : arg) : instruction list = [iSub_arg_const a one] in
   let iNot_arg_list (a : arg) : instruction list = [iNot_arg a ; iAdd_arg_const a 2L] in
   let iPrint_arg_list (a : arg) : instruction list = 
     store_r10_r11 @
@@ -267,7 +270,7 @@ let tag_prog (prog : prog) : tag tfun_def list * tag texpr =
 let rec count_exprs (e : tag texpr) : int64 =
   let add1_i64 (n : int64) : int64 = Int64.add 1L n in
   match e with
-  | TLet (_, _, e_let, _) -> add1_i64 (count_exprs e_let)
+  | TLet (_, value, e_let, _) -> (Int64.add (add1_i64 (count_exprs value)) (count_exprs e_let))
   | TPrim1 (_, n, _) -> add1_i64 (count_exprs n)
   | TPrim2 (_, e1, e2, _) -> add1_i64 (max (count_exprs e1) (count_exprs e2))
   | TIf (cond, thn, els, _) -> add1_i64 (max (max (count_exprs cond) (count_exprs thn)) (count_exprs els))
@@ -361,7 +364,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
       store_first_6_args @
       [
         iMov_arg_arg rdi rax; 
-        iMov_arg_const rsi 2L ; 
+        iMov_arg_const rsi one ; 
         iCall checker_name ; 
         iPop rdi ;
         iPop rsi;
@@ -455,28 +458,17 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
   let compile_apply (nm : string) (args : tag texpr list) : instruction list =
     let largs = List.length args in
     let (_, _) = lookup_comp_fenv nm largs fenv in
-    (*let compile_and_save (e : tag texpr) (slot : int64) : instruction list =
-      compile_expr e slot_env slot fenv tag_fun total_params
-    in
-    let rec compiles_and_save (args : tag texpr list)(slot : int64) : instruction list =
-      match args with
-      | [] -> []
-      | hd::tl -> 
-        (compile_and_save hd slot) @ [iMov_arg_arg (rbp_pointer slot) rax] @ (compiles_and_save tl (Int64.sub slot 1L))
-    in*)
     let rec compiles_and_push (args : tag texpr list) (actual_param : int) : instruction list =
-      (*let n_param = List.length args in*) 
       match args with
       | [] -> []
-      | _::tl -> 
-        compiles_and_push tl (actual_param + 1) @
-        [iMov_arg_to_RAX (rbp_pointer (Int64.sub slot (Int64.of_int (actual_param - 1))))]
+      | id::tl -> 
+        compiles_and_push tl (actual_param + 1)
+        @ compile_expr id slot_env slot fenv tag_fun total_params
         @ (if actual_param > 6 then [iPush rax] else [(move_arg_1_to_6 actual_param rax)])
     in
     let remove_params_7_to_m : instruction list =
       if largs > 6 then [(iAdd_arg_const rsp (Int64.of_int (8 * (largs - 6))))] else []
     in
-    (*compiles_and_save args slot*)
     (store_r10_r11) 
     @ (store_first_6_args) 
     @ (compiles_and_push args 1) 
@@ -605,9 +597,7 @@ let rec compile_funcs (func_list : tag tfun_def list) (cfenv : comp_fenv) : inst
 
 (* Prints the program p (given in abstract Scheme syntax) in NASM code. *)
 let compile_prog p : string =
-  (*Printf.sprintf "%s\n" (string_of_prog p)*)
-
-  (*let _, e = p in*)
+  
   let (tagged_funcs, tagged_main) = tag_prog p in
   let (intrs_funs, cfenv)  = (compile_funcs tagged_funcs (("type_mismatch", [])::empty_comp_fenv)) in 
   let n_lets_main = count_exprs tagged_main in

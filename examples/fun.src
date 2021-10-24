@@ -1,0 +1,4 @@
+(
+  (def (f x) (let (arg1 1) (let (arg2 x) (+ arg1 arg2))))
+  (let (arg1 1) (f arg1))
+)

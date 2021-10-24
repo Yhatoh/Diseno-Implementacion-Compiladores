@@ -2,6 +2,6 @@ NAME: sub1 - check underflow
 DESCRIPTION: sub1 produces underflow
 STATUS: RT error
 SRC:
-(sub1 -4611686018427387904)
+(sub1 -2305843009213693952)
 EXPECTED:
-(- -4611686018427387904 1) will produce underflow\.
+(- -2305843009213693952 1) will produce underflow\.
