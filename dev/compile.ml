@@ -121,8 +121,8 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
     [
       iPush r10 ;
       iPush r11 ;
-      iMov_arg_arg r10 rax ;
-      iMov_arg_to_RAX r10
+      iMov_arg_arg r10 rax
+      (*iMov_arg_to_RAX r10*)
     ] @(*[iMov_arg_arg rax r10] @*)
     (check_rax_is_tuple_instr (Int64.sub slot 1L)) @
     [
