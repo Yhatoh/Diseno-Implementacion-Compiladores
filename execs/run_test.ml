@@ -7,6 +7,7 @@ open Alcotest
 open Bbctester.Test
 open Printf
 open Dev.Regsandstack
+open Execs.Testentrega3
 
 (* Testing arithmetic expression using the print function defined in Interp 
    and the default equality for comparison *)
