@@ -1,6 +1,11 @@
 # Entrega 3
 Esta entrega comprende la implementación de tuplas, getter de valores en tuplas, mutación en el heap y se eligió la creación de records con acceso con nombres.
 
+
+## Con respecto a entregas anteriores
+
+Se pasaron todas las expresiones a ANF, esto porque ya nos estaba tirando muchos problemas haciendoló sin ANF, entonces lo decidimos cambiar a ANF.
+
 ## Objetivos concretos
 ### Implementaciòn de tuplas
 La tuplas se implementaron almacenando esta estructura en el heap (memoria pedida en el programa `sys.c`), el almacenamiento consiste de lo siguiente `tamaño valor_pos0 valor_pos1 valor_pos2 ... valor_posn`, luego de almacenarla se pasa la dirección de memoria tageandola con su tipo para poder recuperarla más tarde. Para este tag se expandió los tag ya usados a lo siguiente: `00` para enteros, `01` para tuplas y `10` para booleanos.
