@@ -891,7 +891,9 @@ let ocaml_tests = [
     test_case "An if clause" `Quick test_parse_fork ;
     test_case "A definition" `Quick test_parse_let ;
     test_case "A compound expression" `Quick test_parse_compound ;
-    test_case "An invalid s-expression" `Quick test_parse_error
+    test_case "An invalid s-expression" `Quick test_parse_error ;
+
+    test_case "A record definition" `Quick test_parse_record ;
   ] ;
   "interp", [
     test_case "A number" `Quick test_interp_num ;
@@ -959,6 +961,11 @@ let ocaml_tests = [
     test_case "Tag a <=" `Quick test_tag_lte;
     test_case "Tag a let" `Quick test_tag_let;
     test_case "Tag a if" `Quick test_tag_if;
+
+    test_case "Tag a tuple" `Quick test_tag_tup;
+    test_case "Tag a tuple get" `Quick test_tag_get;
+    test_case "Tag a tuple set" `Quick test_tag_set;
+    
     test_case "Tag a compound expression" `Quick test_tag_compound;
   ];
   "compile", [
@@ -981,7 +988,11 @@ let ocaml_tests = [
     test_case "compile a print of int" `Quick test_compile_print_int;
     test_case "compile a print of bool" `Quick test_compile_print_bool;
     test_case "compile a function definition" `Quick test_compile_func_def;
-    test_case "compile a function application" `Quick test_compile_func_app
+    test_case "compile a function application" `Quick test_compile_func_app ;
+    
+    test_case "compile a tuple definition" `Quick test_compile_tup ;
+    test_case "compile a tuple get" `Quick test_compile_get ;
+    test_case "compile a tuple set" `Quick test_compile_set ;
   ];
   "errors", [
     test_case "Addition of true" `Quick test_error_III ;
