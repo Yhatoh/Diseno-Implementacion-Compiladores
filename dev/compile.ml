@@ -161,7 +161,7 @@ let binop_to_instr (op : prim2) (slot : int64) (tag : int) (tag_fun : int) : ins
 let unop_to_instr_list (op: prim1) : instruction list =
   let iAdd1_arg_list (a : arg) : instruction list = [iAdd_arg_const a one] in
   let iSub1_arg_list (a : arg) : instruction list = [iSub_arg_const a one] in
-  let iNot_arg_list (a : arg) : instruction list = [iNot_arg a ; iAdd_arg_const a 2L] in
+  let iNot_arg_list (a : arg) : instruction list = [iNot_arg a ; iAdd_arg_const a 2L ; iSub_arg_const a 1L] in
   let iPrint_arg_list (a : arg) : instruction list = 
     store_r10_r11 @
     store_first_6_args @
