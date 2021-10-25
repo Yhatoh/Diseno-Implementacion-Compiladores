@@ -1,0 +1,4 @@
+(library
+ (name tests)
+ (modules testentrega3)
+ (libraries containers dev alcotest bbctester))

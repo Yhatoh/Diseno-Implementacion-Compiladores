@@ -80,19 +80,19 @@ let rec parse_exp (sexp : sexp) : expr =
     | `Atom "and" -> a_normal_form_binop And (parse_exp e1) (parse_exp e2)(*Prim2 (And, parse_exp e1, parse_exp e2)*)
     | `Atom "<=" -> a_normal_form_binop Lte (parse_exp e1) (parse_exp e2)(*Prim2 (Lte, parse_exp e1, parse_exp e2)*)
     | `Atom "get" -> a_normal_form_binop Get (parse_exp e1) (parse_exp e2)(*Prim2 (Get, parse_exp e1, parse_exp e2)*)
-    | `Atom name -> Apply (name, [parse_exp e1 ; parse_exp e2])
+    | `Atom name -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name)) [parse_exp e1 ; parse_exp e2](*Apply (name, [parse_exp e1 ; parse_exp e2])*)
     | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
     )
   | `List [`Atom "if"; e1; e2; e3] -> If (parse_exp e1, parse_exp e2, parse_exp e3)
-  | `List [ `Atom "set"; e; k; v ] -> Set (parse_exp e, parse_exp k, parse_exp v)
-  | `List (`Atom name :: e2) -> Apply (name, List.map parse_exp e2)
+  | `List [ `Atom "set"; e; k; v ] -> (Let ("arg1", parse_exp e, Let ("arg2", parse_exp k, Let ("arg3", parse_exp v, Set (Id "arg1", Id "arg2", Id "arg3")))))
+  | `List (`Atom name :: e2) -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name)) (List.map parse_exp e2)(*Apply (name, List.map parse_exp e2)*)
   | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
 
 let rec create_deffun (name : string) (atris : string list) (pos : int64) : fundef list =
   match atris with
   | [] -> []
   | hd::tl ->
-    DefFun (name ^ "_" ^ hd, ["t"], Prim2(Get, Id "t", Num(pos)))::(create_deffun name tl (Int64.add pos 1L))
+    DefFun (name ^ "_" ^ hd, ["t"], (Let ("arg1", Id "t", (Let ("arg2", Num(pos), Prim2(Get, Id "arg1", Id "arg2"))))))::(create_deffun name tl (Int64.add pos 1L))
 
 let create_id (a : string) : expr =
   Id(a)

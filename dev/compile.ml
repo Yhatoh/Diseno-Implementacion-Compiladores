@@ -222,7 +222,7 @@ let tag_expr (e : expr) : tag texpr =
       (TLet(name, tag_e1, tag_e2, cur), next_tag2)
     | Set(t, pos, value) ->
       let (tag_t, next_tag1) = help t (cur + 1) in
-      let (tag_pos, next_tag2) = help pos (next_tag1 + 1) in
+      let (tag_pos, next_tag2) = help pos (next_tag1) in
       let (tag_value, next_tag3) = help value (next_tag2) in
       (TSet(tag_t, tag_pos, tag_value, cur), next_tag3)
     | Num(num) -> (TNum(num, cur), cur + 1)
@@ -245,11 +245,11 @@ let tag_expr (e : expr) : tag texpr =
         match es with
         | [] -> ([], sub_cur)
         | hd :: tl ->
-          let (tagged_hd, next_tag1) = help hd (sub_cur + 1) in
+          let (tagged_hd, next_tag1) = help hd (sub_cur) in
           let (tagged_tl, next_tag2) = tag_list tl next_tag1 in
           (tagged_hd :: tagged_tl, next_tag2)
       in
-      let (tagged_attrs, next_tag) = tag_list attrs cur in
+      let (tagged_attrs, next_tag) = tag_list attrs (cur + 1) in
       (TTuple(tagged_attrs, cur), next_tag)
   in
   let (tagged, _) = help e 1 in tagged;;
@@ -366,8 +366,6 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
         iMov_arg_arg rdi rax; 
         iMov_arg_const rsi one ; 
         iCall checker_name ; 
-        iPop rdi ;
-        iPop rsi;
         iMov_arg_arg rax (rbp_pointer slot)
       ] @
       pop_first_6_args @
@@ -398,8 +396,8 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
       pop_r10_r11 
     in
     let check_zero_division : instruction list = 
-      store_first_6_args @
       store_r10_r11 @
+      store_first_6_args @
       [
         iMov_arg_arg rdi (rbp_pointer next_slot) ; 
         iCall ("check_div_by_0") ; 
