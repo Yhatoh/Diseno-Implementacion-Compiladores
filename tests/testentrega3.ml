@@ -134,9 +134,7 @@ let test_compile_get () =
                           iCmp_arg_const r11 0L ;
                           IJl "index_too_low" ;
                           iCmp_arg_arg r11 r10_ptr ;
-                          IJge "index_too_high"
-                        ] @
-                        [
+                          IJge "index_too_high" ;
                           iSar r11 2L ;
                           iAdd_arg_const r11 1L ;
                           iSal r11 3L ;
@@ -152,32 +150,22 @@ let test_compile_set () =
                        (
                         [ iMov_arg_to_RAX (Ptr(RBP, -1L)) ] @
                         (check_rax_is_tuple_instr (-4L)) @
-                        [ iMov_arg_to_RAX (Ptr(RBP, -2L)) ] @
-                        [
+                        [ iMov_arg_to_RAX (Ptr(RBP, -2L)) ;
                           iMov_arg_arg (rbp_pointer (-5L)) rax ; 
                           iMov_arg_arg rax (rbp_pointer (-5L))
                         ] @
                         (check_rax_is_int_instr (-5L)) @
-                        [ iMov_arg_to_RAX (Ptr(RBP, -3L)) ] @
-                        [
+                        [ iMov_arg_to_RAX (Ptr(RBP, -3L)) ;
                           iMov_arg_arg (rbp_pointer (Int64.sub (-5L) 1L)) rax ;
                           iPush r10 ;
                           iPush r11 ;
                           iMov_arg_arg r10 (Ptr(RBP, -4L)) ;
                           iSub_arg_const r10 1L ;
-                          iMov_arg_arg r11 (rbp_pointer (-5L)) 
-                        ] @
-                        [
+                          iMov_arg_arg r11 (rbp_pointer (-5L)) ;
                           iCmp_arg_const r11 0L ;
                           IJl "index_too_low" ;
                           iCmp_arg_arg r11 (Ptr(R10, 0L)) ;
-                          IJge "index_too_high"
-                        ] @
-                          (*iCmp_arg_const r11 0L ;
-                          IJl "index_too_low" ;
-                          iCmp_arg_arg r11 (Ptr(R10, 0L)) ;
-                          IJge "index_too_high" ;*)
-                        [
+                          IJge "index_too_high" ;
                           iSar r11 2L ;
                           iAdd_arg_const r11 1L ;
                           iSal r11 3L ;
