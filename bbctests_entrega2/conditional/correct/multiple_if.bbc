@@ -1,0 +1,6 @@
+NAME: if
+DESCRIPTION: multiple conditional
+SRC:
+(if (and (if true true false) false) true (if (<= 10 2) 1000 false))
+EXPECTED:
+|ORACLE

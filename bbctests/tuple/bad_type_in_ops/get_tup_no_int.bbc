@@ -1,0 +1,7 @@
+NAME: get - expect int, get tuple
+DESCRIPTION: expected integer, but got tuple
+STATUS: RT error
+SRC:
+(get (set (tup 20 true (tup)) 2 true) (tup))
+EXPECTED:
+Expected integer, but got (tup)\.

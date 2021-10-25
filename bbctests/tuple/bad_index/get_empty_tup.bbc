@@ -1,0 +1,7 @@
+NAME: get - empty tup
+DESCRIPTION: get of a tuple
+STATUS: RT error
+SRC:
+(get (tup) 0)
+EXPECTED:
+Tuple is empty, size tuple is 0\.

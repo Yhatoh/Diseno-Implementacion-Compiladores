@@ -1,0 +1,7 @@
+NAME: get - too high index
+DESCRIPTION: get of a tuple
+STATUS: RT error
+SRC:
+(get (tup 20 true (tup)) 3)
+EXPECTED:
+Index too high, maximum index is 2\.

@@ -36,7 +36,7 @@ void typeError(u64 type, u64 givenValue) {
 
 void indexError(u64 index, u64 sizeTuple) {
   if(sizeTuple == 0){
-    printf("Tuple is empty, size tuple is 0\n");
+    printf("Tuple is empty, size tuple is 0.\n");
     exit(8);
   } else if (index >= sizeTuple){
     printf("Index too high, maximum index is %" PRId64 ".\n", (sizeTuple / ARITHMETIC_SHIFT_VAL) - 1);
@@ -127,7 +127,7 @@ void check_overflow_mul(u64 a1, u64 a2){
 void check_div_by_0(u64 a1){
   u64 real_a1 = a1 / ARITHMETIC_SHIFT_VAL;
   if(real_a1 == 0){
-    printf("Division by 0\n");
+    printf("Division by 0.\n");
     exit(5);
   }
 }

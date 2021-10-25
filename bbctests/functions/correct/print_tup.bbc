@@ -1,0 +1,7 @@
+NAME: print - tuple
+DESCRIPTION: print a tuple
+SRC:
+(print (tup 1 2 3 (tup false true 0 1 -2000 (tup 1 (tup) (tup)))))
+EXPECTED:
+> (tup 1 2 3 (tup false true 0 1 -2000 (tup 1 (tup) (tup))))
+(tup 1 2 3 (tup false true 0 1 -2000 (tup 1 (tup) (tup))))

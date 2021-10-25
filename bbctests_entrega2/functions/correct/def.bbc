@@ -1,0 +1,9 @@
+NAME: def
+DESCRIPTION: def a function and use it
+SRC:
+(
+  (def (f x) (+ 1 x))
+  (f 1)
+)
+EXPECTED:
+|ORACLE

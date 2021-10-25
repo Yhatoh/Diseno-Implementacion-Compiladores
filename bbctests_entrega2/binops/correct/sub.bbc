@@ -1,0 +1,6 @@
+NAME: sub
+DESCRIPTION: sub two numbers
+SRC:
+(- 20 2)
+EXPECTED:
+|ORACLE

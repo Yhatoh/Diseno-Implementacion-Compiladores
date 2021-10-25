@@ -1,0 +1,6 @@
+NAME: tup
+DESCRIPTION: evaluates a tuple
+SRC:
+(tup true -1 20 (tup -40 100 (tup)))
+EXPECTED:
+|ORACLE
