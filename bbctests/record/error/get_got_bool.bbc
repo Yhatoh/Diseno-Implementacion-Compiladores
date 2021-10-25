@@ -1,0 +1,10 @@
+NAME: record - get got a bool
+DESCRIPTION: get got a bool
+STATUS: RT error
+SRC:
+(
+  (record point3d x y z)
+  (point3d-x true)
+)
+EXPECTED:
+Expected tuple, but got true\.

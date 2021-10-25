@@ -1,0 +1,11 @@
+NAME: def - check fun not found
+DESCRIPTION: call a function that is not defined
+STATUS: CT error
+SRC:
+(
+  (def (g x) (if (<= x 5) 5 x))
+  (def (f x y) (+ (+ 2 x) (g y)))
+  (h 5)
+)
+EXPECTED:
+Undefined function: h

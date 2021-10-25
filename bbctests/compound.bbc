@@ -2,13 +2,16 @@ NAME: compound
 DESCRIPTION: all the operations together
 SRC:
 (
+  (record oth2)
+  (record bot abc x y z)
   (def (g x) (if (<= x 5) 5 x))
   (def (f x y) (let (h 2) (+ (+ 2 x) (g y))))
   (let (x true)
     (let (y 10)
-      (if (and (not (<= y 20)) x)
-        (<= (+ y (add1 y)) 20)
-        (and (<= y (print 30)) x))))
+      (let (z (bot (tup 2 false (tup)) true (oth2) -20))
+        (if (and (not (<= y (* -1 (bot-z z)))) x)
+          (<= (+ y (add1 (bot-abc (set z 0 (get (set (tup (tup)) 0 1) 0))))) 20)
+          (and (<= y (print 30)) x)))))
 )
 EXPECTED:
 > 30

@@ -1,0 +1,7 @@
+NAME: if - check type cond is int
+DESCRIPTION: Expected a boolean in condition, but got an integer
+STATUS: RT error
+SRC:
+(if 100 true false)
+EXPECTED:
+Expected boolean, but got 100\.

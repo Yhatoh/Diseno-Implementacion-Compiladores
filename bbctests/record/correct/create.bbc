@@ -1,0 +1,10 @@
+NAME: record
+DESCRIPTION: do a record
+SRC:
+(
+  (record point2d x y)
+  (record point3d x y z)
+  (point3d 1 false (point3d 1 (point2d 1 (tup)) -20))
+)
+EXPECTED:
+(tup 1 false (tup 1 (tup 1 (tup)) -20))

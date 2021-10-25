@@ -48,6 +48,9 @@ clean: clean-tests
 	rm -Rf _build
 
 clean-tests:
+	find bbctests -type f -name '*.o' -delete
+	find bbctests -type f -name '*.run' -delete
+	find bbctests -type f -name '*.s' -delete
 	rm -f bbctests/*.s bbctests/*.o bbctests/*.run bbctests/*.result bbctests/*~
 	rm -rf bbctests/*dSYM
 

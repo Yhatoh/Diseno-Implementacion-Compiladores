@@ -19,7 +19,12 @@ let empty_comp_fenv : comp_fenv = []
 let rec lookup_comp_fenv : string -> int -> comp_fenv -> comp_fun =
   fun s total_args fenv -> 
     match fenv with
-    | [] -> (failwith (sprintf "Undefined function: %s" s))
+    | [] -> 
+      let splitted = (String.split_on_char '_' s) in
+      begin match splitted with
+      | [record ; param] -> (failwith (sprintf ("Record %s doesn't have %s attribute") record param))
+      | _ -> (failwith (sprintf ("Undefined function: %s") s)) 
+    end
     | ((f_name, f_args)::fs) -> if (f_name = s) then
                                   (if (List.length f_args) = total_args then
                                     (f_name, f_args)

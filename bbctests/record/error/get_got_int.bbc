@@ -1,0 +1,10 @@
+NAME: record - get got a int
+DESCRIPTION: get got a int
+STATUS: RT error
+SRC:
+(
+  (record point3d x y z)
+  (point3d-x 2)
+)
+EXPECTED:
+Expected tuple, but got 2\.

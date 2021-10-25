@@ -1,0 +1,15 @@
+NAME: compound
+DESCRIPTION: all the operations together
+SRC:
+(
+  (def (g x) (if (<= x 5) 5 x))
+  (def (f x y) (let (h 2) (+ (+ 2 x) (g y))))
+  (let (x true)
+    (let (y 10)
+      (if (and (not (<= y 20)) x)
+        (<= (+ y (add1 y)) 20)
+        (and (<= y (print 30)) x))))
+)
+EXPECTED:
+> 30
+true
