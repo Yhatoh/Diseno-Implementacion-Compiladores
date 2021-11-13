@@ -7,7 +7,8 @@ exception RTError of string
 type value = 
   | NumV of int64
   | BoolV of bool
-  | TupleV of value list ref
+  | TupleV of value ref list
+  | ClosureV of int * (value list -> value)
 
 (* Pretty printing *)
 let rec string_of_val(v : value) : string =
@@ -18,8 +19,9 @@ match v with
         let rec string_of_val_list =
             fun ls -> (match ls with
             | [] -> ""
-            | e::l -> " " ^ string_of_val e ^ string_of_val_list l) in 
-        "(tup"^(string_of_val_list !vals)^")"
+            | e::l -> " " ^ string_of_val !e ^ string_of_val_list l) in 
+        "(tup"^(string_of_val_list vals)^")"
+| ClosureV (arity, _) -> Printf.sprintf "<clos:%d>" arity
 
 (* Lexical Environment *)
 type env = (string * value) list
@@ -71,28 +73,27 @@ let liftBB : (bool -> bool) -> value -> value =
     | _ -> failwith "runtime type error"
   
 
+let get_ref : 'a list -> int64 -> 'a =
+  fun ts n ->
+  (try List.nth ts (Int64.to_int n)
+   with
+   | Failure msg -> raise (RTError msg)
+   | RTError msg -> raise (RTError msg)
+   | e -> raise (RTError ("unknown error in get elem:"^ Printexc.to_string e )))
+
 let get_elem : value -> value -> value =
     fun v1 v2 ->
         match v1, v2 with
-        | TupleV ts, NumV n -> 
-                (try List.nth !ts (Int64.to_int n)
-                with
-                | Failure msg -> raise (RTError msg)
-                | RTError msg -> raise (RTError msg)
-                | e -> raise (RTError ("unknown error in get elem:"^ Printexc.to_string e )))
+      | TupleV ts, NumV n ->
+        !(get_ref ts n)
         | _ -> raise (RTError (Printf.sprintf "Expected tuple in first position and integer in second position, but got %s and %s" (string_of_val v1) (string_of_val v2)))
-
-let rec change : 'a list -> int -> int -> 'a -> 'a list =
-    fun es index n v -> 
-        if index == n 
-        then v :: (List.tl es)
-        else (List.hd es) :: change (List.tl es) (1 + index) n v
 
 let set_elem : value -> value -> value -> value = 
     fun v1 v2 v3 -> 
         match v1,v2 with
-        | TupleV ts, NumV n -> 
-                ts := change !ts 0 (Int64.to_int n) v3 ; TupleV ts
+      | TupleV ts, NumV n ->
+        let elem = get_ref ts n in
+        elem := v3 ; TupleV ts
         | _ -> raise (RTError (Printf.sprintf "Expected tuple in first position and integer in second position, but got %s and %s" (string_of_val v1) (string_of_val v2)))
 
 (* Sys functions *)
@@ -107,11 +108,12 @@ let rec check_type (t : ctype) (v : value) : value =
     match v, t with
     | NumV _, CInt | BoolV _, CBool | _, CAny -> v
     | TupleV vals, CTuple types -> 
-            let _ = List.map2 check_type types !vals in
+            let _ = List.map2 (fun x y -> (check_type x !y)) types vals in
             v
     | NumV _, _ -> raise (RTError (Printf.sprintf "Expected boolean but got %s" (string_of_val v)))
     | BoolV _, _ -> raise (RTError (Printf.sprintf "Expected integer but got %s" (string_of_val v)))
     | TupleV _,_ -> raise (RTError (Printf.sprintf "Expected tuple but got %s" (string_of_val v)))
+    | _ -> raise (RTError (Printf.sprintf "Expected C type but got %s" (string_of_val v))) (* TODO: Incluse closures into the mix *)
             
 
 
@@ -160,11 +162,41 @@ let rec interp expr env fenv =
     (*| DefSys (_, arg_types, ret_type) ->
       check_type ret_type @@ interp_sys name (List.map2 check_type arg_types vals)) *)
   | Tuple exprs -> 
-          TupleV (ref (List.map (fun e -> interp e env fenv) exprs))
+          TupleV (List.map (fun e -> (ref (interp e env fenv))) exprs)
   | Set (e,k,v) ->
           let t = (interp e env fenv) in
           let i = (interp k env fenv) in
           set_elem t i (interp v env fenv)
+  | Lambda (params, body) -> ClosureV (List.length params,
+    (fun vals -> 
+      let env = extend_env params vals env in
+      interp body env fenv
+      )
+    )
+  | LamApply (fun_exp, args) ->
+    let f = interp fun_exp env fenv in
+    (
+      match f with
+      | ClosureV (arity, closure) -> 
+        let vals = List.map (fun e -> interp e env fenv) args in
+        if List.length vals <> arity then raise (RTError (Printf.sprintf "Expected closure of arity %d, but got %s" (List.length args) (string_of_val f))) else
+        closure vals
+      | _ -> raise (RTError (Printf.sprintf "Expected closure of arity %d, but got %s" (List.length args) (string_of_val f)))
+    )
+  | LetRec (recs, body) -> 
+    let env_box = ref [] in
+    let names_n_closures = List.map (
+      fun (name, params, body) ->
+        name, ClosureV (List.length params, (fun vals -> 
+          let env = extend_env params vals !env_box in
+          interp body env fenv
+          )
+        )
+    ) recs in
+    let names, closures = List.split names_n_closures in
+    let env = extend_env names closures env in
+    env_box := env ;
+    interp body env fenv
 
 let interp_prog prog env =
   let defs, expr = prog in

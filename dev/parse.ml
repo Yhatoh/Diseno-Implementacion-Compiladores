@@ -5,6 +5,7 @@ open CCSexp
 
 exception CTError of string
 
+<<<<<<< HEAD
 (* Applies ANF to a unary operation. *)
 let a_normal_form_unop (op : prim1) (arg : expr) : expr =
   (Let ("arg", arg, Prim1 (op, (Id "arg"))))
@@ -49,15 +50,25 @@ let a_normal_form_tuple (attr_list : expr list) : expr =
   assign_id_and_execute attr_list arg_ids_exprs ids_strs
 
 
+=======
+let parse_arg_name (sexp : sexp) : string =
+  match sexp with
+  | `Atom name -> name
+  | _ -> raise (CTError (sprintf "Not a valid argument name: %s" (to_string sexp)))
+>>>>>>> cdi/entrega4
 
 let rec parse_exp (sexp : sexp) : expr =
   match sexp with
   | `Atom "true" -> Bool true
   | `Atom "false" -> Bool false
-  | `Atom "tup" -> Tuple []
   | `Atom s -> (
     match Int64.of_string_opt s with Some n -> Num n | None -> Id s )
+<<<<<<< HEAD
   | `List (`Atom "tup" :: exprs) -> a_normal_form_tuple (List.map parse_exp exprs)(*Tuple (List.map parse_exp exprs)*)
+=======
+  | `List (`Atom "tup" :: exprs) -> Tuple (List.map parse_exp exprs)
+  | `List (`Atom "@" :: e1 :: exprs) -> LamApply (parse_exp e1, List.map parse_exp exprs)
+>>>>>>> cdi/entrega4
   | `List [eop; e] -> (
     match eop with 
     | `Atom "add1" -> Prim1 (Add1, parse_exp e)
@@ -73,6 +84,7 @@ let rec parse_exp (sexp : sexp) : expr =
       match e1 with
       | `List [`Atom id; e] -> Let (id, parse_exp e, parse_exp e2)
       | _ -> raise (CTError (sprintf "Not a valid let assignment: %s" (to_string e1))) )
+<<<<<<< HEAD
     | `Atom "+" -> a_normal_form_binop Add (parse_exp e1) (parse_exp e2)(*Prim2 (Add, parse_exp e1, parse_exp e2)*)
     | `Atom "-" -> a_normal_form_binop Sub (parse_exp e1) (parse_exp e2)(*Prim2 (Sub, parse_exp e1, parse_exp e2)*)
     | `Atom "*" -> a_normal_form_binop Mul (parse_exp e1) (parse_exp e2)(*Prim2 (Mul, parse_exp e1, parse_exp e2)*)
@@ -81,6 +93,23 @@ let rec parse_exp (sexp : sexp) : expr =
     | `Atom "<=" -> a_normal_form_binop Lte (parse_exp e1) (parse_exp e2)(*Prim2 (Lte, parse_exp e1, parse_exp e2)*)
     | `Atom "get" -> a_normal_form_binop Get (parse_exp e1) (parse_exp e2)(*Prim2 (Get, parse_exp e1, parse_exp e2)*)
     | `Atom name -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name)) [parse_exp e1 ; parse_exp e2](*Apply (name, [parse_exp e1 ; parse_exp e2])*)
+=======
+    | `Atom "letrec" -> (
+      match e1 with
+      | `List recs -> LetRec (parse_recs recs, parse_exp e2)
+      | _ -> raise (CTError (sprintf "Not a valid letrec assignment: %s" (to_string e1)))
+      )
+    | `Atom "+" -> Prim2 (Add, parse_exp e1, parse_exp e2)
+    | `Atom "and" -> Prim2 (And, parse_exp e1, parse_exp e2)
+    | `Atom "<=" -> Prim2 (Lte, parse_exp e1, parse_exp e2)
+    | `Atom "get" -> Prim2 (Get, parse_exp e1, parse_exp e2)
+    | `Atom "lambda" -> (
+      match e1 with
+      | `List params -> Lambda (List.map parse_arg_name params, parse_exp e2)
+      | _ -> raise (CTError (sprintf "Not a valid lambda: %s" (to_string sexp)))
+    )
+    | `Atom name -> Apply (name, [parse_exp e1 ; parse_exp e2])
+>>>>>>> cdi/entrega4
     | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
     )
   | `List [`Atom "if"; e1; e2; e3] -> If (parse_exp e1, parse_exp e2, parse_exp e3)
@@ -88,6 +117,7 @@ let rec parse_exp (sexp : sexp) : expr =
   | `List (`Atom name :: e2) -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name)) (List.map parse_exp e2)(*Apply (name, List.map parse_exp e2)*)
   | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
 
+<<<<<<< HEAD
 let rec create_deffun (name : string) (atris : string list) (pos : int64) : fundef list =
   match atris with
   | [] -> []
@@ -96,6 +126,21 @@ let rec create_deffun (name : string) (atris : string list) (pos : int64) : fund
 
 let create_id (a : string) : expr =
   Id(a)
+=======
+and parse_recs (recs : sexp list) : (string * string list * expr) list =
+  List.map (
+    fun sexp -> (
+      match sexp with
+      | `List [`Atom name ; r] ->
+        let e = parse_exp r in
+        (match e with
+        | Lambda (params, body) -> name, params, body
+        | _ -> raise (CTError (sprintf "Not a valid letrec assignment: %s" (string_of_expr e)))
+        )
+      | _ -> raise (CTError (sprintf "Not a valid letrec assignment: %s" (to_string sexp)))
+    )
+  ) recs
+>>>>>>> cdi/entrega4
 
 let rec parse_prog (sexp : sexp) : prog =
   match sexp with
@@ -124,11 +169,6 @@ let rec parse_prog (sexp : sexp) : prog =
     | _ -> [], parse_exp sexp
   )
   | _ -> [], parse_exp sexp
-
-and parse_arg_name (sexp : sexp) : string =
-  match sexp with
-  | `Atom name -> name
-  | _ -> raise (CTError (sprintf "Not a valid argument name: %s" (to_string sexp)))
 
 and parse_c_type (sexp : sexp) : ctype =
   match sexp with

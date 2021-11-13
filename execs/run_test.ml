@@ -43,6 +43,9 @@ let test_parse_bool () =
 (*let test_parse_tuple () =
     check exp "same tuple" (parse_exp (`List [`Atom "tup"; `Atom "true" ; `Atom "1"])) (Tuple [(Bool true);(Num 1L)] )*)
 
+let test_parse_empty_tuple () =
+    check exp "empty tuple" (parse_exp (`List [`Atom "tup"])) (Tuple [] )
+
 let test_parse_add1 () =
   check exp "increment applies" 
   (parse_exp (`List [`Atom "add1" ; `Atom "1"])) 
@@ -78,15 +81,40 @@ let test_parse_let () =
   (parse_exp (`List [`Atom "let" ; `List [`Atom "x" ; `Atom "1"] ; `List [`Atom "let" ; `List [`Atom "y" ; `Atom "7"] ; `Atom "10"] ])) 
   (Let ("x", Num 1L, Let ("y", Num 7L, Num 10L)))
 
+let test_parse_lambda_empty () =
+  check exp "empty params lambda is parsed"
+  (parse_exp (`List [`Atom "lambda" ; `List [] ; `Atom "1"])) 
+  (Lambda ([], Num 1L))
+
+let test_parse_lambda () =
+  check exp "lambda is parsed"
+  (parse_exp (`List [`Atom "lambda" ; `List [`Atom "x" ; `Atom "y"] ; `List [`Atom "+" ; `Atom "x" ; `Atom "y"]])) 
+  (Lambda (["x" ; "y"], Prim2 (Add, Id "x", Id "y")))
+
+let test_parse_lambda_apply () =
+  check exp "lambda application is parsed"
+  (parse_exp (`List [`Atom "@" ; `List [`Atom "lambda" ; `List [`Atom "x" ; `Atom "y"] ; `List [`Atom "+" ; `Atom "x" ; `Atom "y"]] ; `Atom "7" ; `Atom "13"])) 
+  (LamApply ((Lambda (["x" ; "y"], Prim2 (Add, Id "x", Id "y"))), [Num 7L ; Num 13L]))
+  
+let test_parse_letrec_empty () =
+  check exp "empty letrec is parsed"
+  (parse_exp (`List [`Atom "letrec" ; `List [] ; `Atom "7"])) 
+  (LetRec ([], Num 7L))
+
+let test_parse_letrec () =
+  check exp "letrec is parsed"
+  (parse_exp (`List [`Atom "letrec" ; `List [`List [`Atom "f" ; `List [`Atom "lambda" ; `List [`Atom "x" ; `Atom "y"] ; `List [`Atom "+" ; `Atom "x" ; `Atom "y"]]] ; `List [ `Atom "g" ; `List [`Atom "lambda" ; `List [] ; `Atom "21"]]] ; `List [`Atom "@" ; `Atom "f" ; `List [`Atom "@" ; `Atom "g"] ; `List [`Atom "@" ; `Atom "g"]]])) 
+  (LetRec (["f", ["x" ; "y"], Prim2 (Add, Id "x", Id "y") ; "g", [], Num 21L], LamApply (Id "f", [LamApply (Id "g", []) ; LamApply (Id "g", [])])))
+  
 let test_parse_compound () =
   check exp "same expr"
   (parse_exp (`List [`Atom "+" ; `List [`Atom "+" ; `Atom "3"; `Atom "x"]; `Atom "7"]))
   (Let ("arg1", Let ("arg1", Num 3L, Let ("arg2", Id "x", Prim2 (Add, Id "arg1", Id "arg2"))), Let ("arg2", Num 7L, Prim2 (Add, Id "arg1", Id "arg2"))))
 
 let test_parse_error () =
-  let sexp = `List [`List [`Atom "foo"]; `Atom "bar"] in
+  let sexp = `List [`List []; `Atom "bar"] in
   check_raises "Should raise a parse error" 
-    (CTError (Fmt.strf "Not a valid expr: %a" CCSexp.pp sexp))
+    (CTError (Fmt.strf "Not a valid expr: (() bar)"))
     (fun () -> ignore @@ parse_exp sexp)
 
 (* Tests for our [interp] function *)
@@ -156,7 +184,12 @@ let test_interp_fo_fun_1 () =
 let test_interp_tup () =
   let v = (interp (Tuple [Num 12L;Bool true;Tuple []])) empty_env empty_fenv in
   check value "a tuple val" v 
-  (TupleV (ref [NumV 12L;BoolV true; TupleV (ref [])]))
+  (TupleV [(ref (NumV 12L));(ref (BoolV true)); (ref (TupleV []))])
+
+let test_interp_empty_tup () =
+  let v = (interp (Tuple [])) empty_env empty_fenv in
+  check value "an empty tuple val" v 
+  (TupleV [])
 
 let test_interp_get () =
   let v = (interp (Prim2 (Get ,Tuple [Num 12L;Bool true;Tuple []],Num 0L))) empty_env empty_fenv in
@@ -166,7 +199,32 @@ let test_interp_get () =
 let test_interp_set () =
   let v = (interp (Let ("x",(Tuple [Num 12L;Bool true;Tuple []]) , (Let ("foo", (Set (Id "x", Num 1L, Bool false)), (Id "x")))))) empty_env empty_fenv in
   check value "correct set execution" v 
-  (TupleV (ref [NumV 12L;BoolV false; TupleV (ref [])]))
+  (TupleV [(ref (NumV 12L));(ref (BoolV false)); (ref (TupleV []))])
+  
+let test_interp_lambda_empty () =
+  check string "empty params lambda is parsed"
+  (string_of_val (interp (Lambda ([], Num 1L)) empty_env empty_fenv))
+  (string_of_val (ClosureV (0, (fun _ -> NumV 5L))))
+
+let test_interp_lambda () =
+  check string "lambda is parsed"
+  (string_of_val (interp (Lambda (["x" ; "y"], Prim2 (Add, Id "x", Id "y"))) empty_env empty_fenv))
+  (string_of_val (ClosureV (2, (fun _ -> NumV 5L))))
+  
+let test_interp_lambda_apply () =
+  check value "lambda application is parsed"
+  (interp (LamApply ((Lambda (["x" ; "y"], Prim2 (Add, Id "x", Id "y"))), [Num 7L ; Num 13L])) empty_env empty_fenv)
+  (NumV 20L) 
+  
+let test_interp_letrec_empty () =
+  check value "empty letrec is parsed"
+  (interp (LetRec ([], Num 7L)) empty_env empty_fenv)
+  (NumV 7L) 
+
+let test_interp_letrec () =
+  check value "letrec is parsed"
+  (interp (LetRec (["f", ["x" ; "y"], Prim2 (Add, Id "x", Id "y") ; "g", [], Num 21L], LamApply (Id "f", [LamApply (Id "g", []) ; LamApply (Id "g", [])]))) empty_env empty_fenv)
+  (NumV 42L)
   
 let test_interp_fo_fun_2 () =
   let v = (interp_prog (
@@ -1058,9 +1116,12 @@ let ocaml_tests = [
     test_case "A conjunction" `Quick test_parse_and ;
     test_case "An if clause" `Quick test_parse_fork ;
     test_case "A definition" `Quick test_parse_let ;
+    test_case "A lambda with no parameters" `Quick test_parse_lambda_empty ;
+    test_case "A lambda" `Quick test_parse_lambda ;
+    test_case "A letrec with no lambdas" `Quick test_parse_letrec_empty ;
+    test_case "A letrec with an apply" `Quick test_parse_letrec ;
     test_case "A compound expression" `Quick test_parse_compound ;
     test_case "An invalid s-expression" `Quick test_parse_error ;
-
     test_case "A record definition" `Quick test_parse_record ;
   ] ;
   "interp", [
@@ -1083,7 +1144,11 @@ let ocaml_tests = [
     test_case "A complex application" `Slow test_interp_fo_app_2 ;
     test_case "A compound expression" `Quick test_interp_compound;
     test_case "A get expression" `Slow test_interp_get ;
-    test_case "A set expression" `Slow test_interp_set 
+    test_case "A set expression" `Slow test_interp_set ;
+    test_case "A lambda with no parameters" `Slow test_interp_lambda_empty ;
+    test_case "A lambda" `Slow test_interp_lambda ;
+    test_case "A letrec no lambdas" `Slow test_interp_letrec_empty ;
+    test_case "A letrec" `Slow test_interp_letrec ;
   ] ;
   "constructor", [
     test_case "A stack pointer constructor" `Quick test_constructor_rsp_pointer ;
