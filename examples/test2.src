@@ -1,4 +1,11 @@
-(let (y 10)
-  (if (&& (<= y 20) true)
-    100
-    false))
+(
+  (def (mult_aux acum n m) (if (<= m 0)
+                              acum
+                              (mult_aux (+ acum n) n (sub1 m))))
+  (def (mult n m) (mult_aux 0 n m))
+  (def (fact n) (if (<= n 0)
+                  1
+                  (mult n (fact (sub1 n)))
+                  ))
+  (fact 5)
+)
