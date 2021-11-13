@@ -182,7 +182,14 @@ let rec count_exprs (e : tag texpr) : int64 =
   | TPrim1 (_, n, _) -> add1_i64 (count_exprs n)
   | TPrim2 (_, e1, e2, _) -> add1_i64 (max (count_exprs e1) (count_exprs e2))
   | TIf (cond, thn, els, _) -> add1_i64 (max (max (count_exprs cond) (count_exprs thn)) (count_exprs els))
-  | TApply _ | TId _ | TBool _ | TNum _ -> 1L
+  | TId _ | TBool _ | TNum _ -> 1L
+  | TApply (_, args, _) ->
+    let rec count_tuple_exprs (e_list : tag texpr list) : int64 =
+      match e_list with
+      | [] -> 0L
+      | hd::tl -> Int64.add (count_exprs hd) (count_tuple_exprs tl)
+    in
+    count_tuple_exprs args
 
 (* Pretty printing - used by testing framework *)
 let rec string_of_tag_expr(e : tag texpr) : string = 
