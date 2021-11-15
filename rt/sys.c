@@ -131,16 +131,25 @@ void print_tuple(u64 result){
 }
 
 void print_value(u64 value){
+  //00 entero
+  //01 tuple
+  //10 bool
+  //11 clausura
+
+  //11 & 2 =
   u64 check = value & 2LL;
-  if(check){
+  if(check == 2LL){
     value >>= LOGICAL_SHIFT_VAL;
     if(value & 1LL){
       printf("true");
     } else {
       printf("false");
     }
-  } else if (value & 1LL) { // is tuple
+  } else if ((value & 1LL) == 1LL) { // is tuple
     print_tuple(value);
+  } else if ((value & 3LL) == 3LL) {
+    uint64_t* tuplePtr = (uint64_t*)(value - 3LL);
+    printf("<clos:%" PRId64 ">", *tuplePtr);
   } else {
     value /= ARITHMETIC_SHIFT_VAL;
     printf("%" PRId64 "", value);

@@ -101,16 +101,6 @@ let rec parse_exp (sexp : sexp) : expr =
   | `List [ `Atom "set"; e; k; v ] -> (Let ("arg1", parse_exp e, Let ("arg2", parse_exp k, Let ("arg3", parse_exp v, Set (Id "arg1", Id "arg2", Id "arg3")))))
   | `List (`Atom name :: e2) -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name)) (List.map parse_exp e2)(*Apply (name, List.map parse_exp e2)*)
   | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
-
-let rec create_deffun (name : string) (atris : string list) (pos : int64) : fundef list =
-  match atris with
-  | [] -> []
-  | hd::tl ->
-    DefFun (name ^ "_" ^ hd, ["t"], (Let ("arg1", Id "t", (Let ("arg2", Num(pos), Prim2(Get, Id "arg1", Id "arg2"))))))::(create_deffun name tl (Int64.add pos 1L))
-
-let create_id (a : string) : expr =
-  Id(a)
-
 and parse_recs (recs : sexp list) : (string * string list * expr) list =
   List.map (
     fun sexp -> (
@@ -124,6 +114,16 @@ and parse_recs (recs : sexp list) : (string * string list * expr) list =
       | _ -> raise (CTError (sprintf "Not a valid letrec assignment: %s" (to_string sexp)))
     )
   ) recs
+
+let rec create_deffun (name : string) (atris : string list) (pos : int64) : fundef list =
+  match atris with
+  | [] -> []
+  | hd::tl ->
+    DefFun (name ^ "_" ^ hd, ["t"], (Let ("arg1", Id "t", (Let ("arg2", Num(pos), Prim2(Get, Id "arg1", Id "arg2"))))))::(create_deffun name tl (Int64.add pos 1L))
+
+let create_id (a : string) : expr =
+  Id(a)
+
 
 let rec parse_prog (sexp : sexp) : prog =
   match sexp with

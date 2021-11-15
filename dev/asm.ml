@@ -21,6 +21,7 @@ type arg =
 | Const of int64
 | Reg of reg
 | Ptr of reg * int64
+| FLabel of string
 
 let rax = Reg RAX
 let rsp = Reg RSP
@@ -142,6 +143,7 @@ let pp_arg arg : string =
   | Const n -> sprintf "%#Lx" n
   | Reg r -> pp_reg r
   | Ptr (r, n) -> sprintf "qword[%s%s]" (pp_reg r) (pp_int (Int64.mul 8L n))
+  | FLabel s -> s
 
 let pp_instr instr : string =
   match instr with

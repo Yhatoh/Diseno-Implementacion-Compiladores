@@ -8,7 +8,7 @@ let extend_slot_env : string -> int64 -> slot_env -> slot_env =
   fun x v slot_env -> (x, v) :: slot_env
 let rec slot_env_lookup (var : string) (slot_env : slot_env) : int64 =
   match slot_env with
-  | [] -> failwith "Unbound identifier."
+  | [] -> failwith (sprintf "Unbound identifier %s." var)
   | (n, slot) :: rest -> if n = var then slot else (slot_env_lookup var rest)
 
 

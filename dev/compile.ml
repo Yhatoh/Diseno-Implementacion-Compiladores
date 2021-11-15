@@ -52,7 +52,7 @@ let check_rax_is_tuple_instr (slot : int64) : instruction list =
   check_rax_is_type_instr tup_tag slot
 
 (* NASM code to verify that the value in RAX is a lambda in our language *)
-let check_rax_is_tuple_instr (slot : int64) : instruction list =
+let check_rax_is_lambda_instr (slot : int64) : instruction list =
   check_rax_is_type_instr lambda_tag slot
 
 (* Verifies that the value of the operand of a unary
@@ -259,7 +259,7 @@ let tag_expr (e : expr) : tag texpr =
       (TTuple(tagged_attrs, cur), next_tag)
     | Lambda(args_names, e) -> 
       let (tag_e, next_tag) = help e (cur + 1) in
-      (TLambda(arg_names, tag_e, cur), next_tag)
+      (TLambda(args_names, tag_e, cur), next_tag)
   in
   let (tagged, _) = help e 1 in tagged;;
 
@@ -571,11 +571,27 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
     let end_lambda = (sprintf "lambda_%d_%d_end" tag_fun t) in
     let add_int64 (a : int64) (b : int64) : int64 = Int64.add a b in
     let triple_add_int64 (a : int64) (b : int64) (c : int64) : int64 = add_int64 (add_int64 a b) c in
+    let rec exist_var_slot_env (name : string) (slot_env : slot_env): bool =
+      match slot_env with
+      | [] -> false
+      | (n, _) :: rest -> if (n = name) then true else (exist_var_slot_env name rest)
+    in 
+    let rec var_is_a_param (name : string) (arg_names : string list) : bool =
+      match arg_names with
+      | [] -> false
+      | n:: rest -> if (n = name) then true else (var_is_a_param name rest)
+    in 
     let rec count_vars (e_l : tag texpr) : int64 * string list =
       begin match e_l with
-      | TId (s, _) -> (1L, [s])
-      | TNum (n, _) | TBool (b, _) -> (0L, [])
-      | TPrim1 (op, n, _) -> 
+      | TId (s, _) -> 
+        if (exist_var_slot_env s slot_env)
+        then 
+          if not (var_is_a_param s arg_names)
+          then (1L, [s]) 
+          else (0L, [])
+        else (0L, [])
+      | TNum (_, _) | TBool (_, _) -> (0L, [])
+      | TPrim1 (_, n, _) -> 
         let sum, lambda_env = count_vars n in
         (sum, lambda_env)
       | TLet (_, e1, e2, _) | TPrim2 (_, e1, e2, _) ->
@@ -588,7 +604,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
         let sum_els, lambda_env_els = (count_vars els) in
         (triple_add_int64 sum_cond sum_thn sum_els, lambda_env_cond @ lambda_env_thn @ lambda_env_els)
       | TApply(_, args, _) -> 
-        let rec count_apply_vars (e_list : tag texpr list) : int64 =
+        let rec count_apply_vars (e_list : tag texpr list) : int64 * string list =
           match e_list with
           | [] -> (0L, [])
           | hd::tl -> 
@@ -598,7 +614,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
         in
         count_apply_vars args
       | TTuple(attrs, _) -> 
-        let rec count_tuple_vars (e_list : tag texpr list) : int64 =
+        let rec count_tuple_vars (e_list : tag texpr list) : int64 * string list =
           match e_list with
           | [] -> (0L, [])
           | hd::tl -> 
@@ -606,7 +622,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
             let sum_tl, lambda_env_tl = (count_tuple_vars tl) in
             (add_int64 sum_hd sum_tl, lambda_env_hd @ lambda_env_tl)
         in
-        count_tuple_vars args
+        count_tuple_vars attrs
       | TSet(t, pos, value, _) ->
         let sum_t, lambda_env_t = (count_vars t) in
         let sum_pos, lambda_env_pos = (count_vars pos) in
@@ -627,10 +643,11 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
           else is_member name tl 
       in
       let rec loop (lst : string list) : string list =
+        match lst with
         | [] -> []
-        | hd::tl ->clean_lambda_env
+        | hd::tl -> (*clean_lambda_env*)
           begin
-            let result = lst tl in 
+            let result = loop tl in 
             if is_member hd result then result
             else hd::tl
           end
@@ -638,37 +655,73 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
       loop lst
     in
     let clean_lambda_env = remove_duplicate lambda_env in
-    let allocate_vars (lst : string list) (pos : int64): instruction list =
+    let rec allocate_vars (lst : string list) (pos : int64): instruction list =
       match lst with
       | [] -> []
       | hd::tl -> 
-        (compiled_expr hd) @
-        [iMov_arg_arg Ptr(R11, (add_int64 24L (Int64.mul 8L pos))) rax] @
+        (compile_tid hd) @
+        [iMov_arg_arg (Ptr(R11, (add_int64 3L pos))) rax] @
         allocate_vars tl (add_int64 pos 1L)
     in
+    let rec free_var_to_stack (lst : string list) (slot_env : slot_env) (pos : int64) : instruction list * slot_env =
+      match lst with
+      | [] -> ([], slot_env)
+      | hd::tl -> 
+        let allocations, new_slot_env = 
+          free_var_to_stack tl (extend_slot_env hd pos slot_env) (Int64.sub pos 1L)
+        in
+        let pos_heap = add_int64 2L (Int64.mul pos (-1L)) in
+        let mov_free_var =
+          [
+           iMov_arg_arg rax (Ptr(R11, pos_heap)) ;
+           iMov_arg_arg (Ptr(RBP, pos)) rax 
+          ]
+        in 
+        (mov_free_var @ allocations, new_slot_env)
+    in
+    let rec add_args_to_env (arg_ids : string list) (slot : int64) : slot_env =
+      match arg_ids with
+      | [] -> empty_slot_env
+      | arg :: tl -> extend_slot_env arg slot (add_args_to_env tl (Int64.add slot 1L))
+    in
+    let storage_of_free_vars, new_slot_env = free_var_to_stack clean_lambda_env slot_env (-1L) in
+    let new_slot_env = (add_args_to_env arg_names 1L) @ new_slot_env in
+    let n_local_vars = count_exprs e in
     let closure_lambda =
       [
-       IPush R11;
+       iPush r11;
        iMov_arg_arg r11 r15;
        iAdd_arg_const r15 (Int64.add 3L cant_vars);
-       iMov_arg_const Ptr(R11, 0L) (List.length arg_names);
-       iMov_arg_const Ptr(R11, 8L) start_lambda;
-       iMov_arg_const Ptr(R11, 16L) cant_vars;
+       iMov_arg_const (Ptr(R11, 0L)) (Int64.of_int (List.length arg_names));
+       IMov((Ptr(R11, 1L)), FLabel start_lambda);
+       iMov_arg_const (Ptr(R11, 2L)) cant_vars;
       ] @ 
       allocate_vars clean_lambda_env 0L @
       [
        iMov_arg_to_RAX r11;
        iAdd_arg_const rax lambda_tag;
-       IPop R11;
+       iPop r11;
       ] 
     in 
-    [i_jmp end_lambda] @
-    [i_label start_lambda] @
-    (*compilacion funcion*)
-    (*
-      (let (five 5) (lambda (x) (+ five (+ five five))))
-    *)
-    [i_label end_lambda] @
+    [
+     i_jmp end_lambda ;
+     i_label start_lambda ; 
+     iPush rbp ;
+     iMov_arg_arg rbp rsp ;
+     iSub_arg_const rsp cant_vars ;
+     iPush r11 ;
+     iMov_arg_arg r11 rdi ;
+     iSub_arg_const r11 lambda_tag ;
+    ] @
+    storage_of_free_vars @
+    [iSub_arg_const rsp (Int64.mul 8L (n_local_vars))] @
+    compile_expr e new_slot_env (Int64.mul cant_vars (-1L)) fenv tag_fun total_params @
+    [
+     iMov_arg_arg rsp rbp ;
+     iPop rbp ;
+     IRet ;
+     i_label end_lambda;
+    ] @
     closure_lambda
   in
   (* Main compile instruction here *)
