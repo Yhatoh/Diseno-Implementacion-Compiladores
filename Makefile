@@ -33,7 +33,7 @@ interp:
 	dune exec execs/run_interp.exe $(src)
 
 %.run: %.o rt/sys.c
-	clang -o $@ $(CFLAGS) rt/sys.c $<
+	clang -o $@ $(CFLAGS) -no-pie rt/sys.c $<
 
 %.o: %.s
 	nasm -f $(BIN_FORMAT) -o $@ $<

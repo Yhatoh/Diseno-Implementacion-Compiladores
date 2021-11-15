@@ -137,17 +137,18 @@ void print_value(u64 value){
   //11 clausura
 
   //11 & 2 =
-  u64 check = value & 2LL;
-  if(check == 2LL){
+  //DEBUG((value & 2LL));
+  //DEBUG((value & 3LL));
+  if((value & 2LL) == (value & 3LL)){
     value >>= LOGICAL_SHIFT_VAL;
     if(value & 1LL){
       printf("true");
     } else {
       printf("false");
     }
-  } else if ((value & 1LL) == 1LL) { // is tuple
+  } else if ((value & 1LL) == (value & 3LL)) { // is tuple
     print_tuple(value);
-  } else if ((value & 3LL) == 3LL) {
+  } else if ((value & 3LL) == (value & 3LL)) {
     uint64_t* tuplePtr = (uint64_t*)(value - 3LL);
     printf("<clos:%" PRId64 ">", *tuplePtr);
   } else {

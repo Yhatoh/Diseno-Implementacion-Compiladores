@@ -691,7 +691,7 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
       [
        iPush r11;
        iMov_arg_arg r11 r15;
-       iAdd_arg_const r15 (Int64.add 3L cant_vars);
+       iAdd_arg_const r15 (Int64.mul 8L (Int64.add 3L cant_vars));
        iMov_arg_const (Ptr(R11, 0L)) (Int64.of_int (List.length arg_names));
        IMov((Ptr(R11, 1L)), FLabel start_lambda);
        iMov_arg_const (Ptr(R11, 2L)) cant_vars;
