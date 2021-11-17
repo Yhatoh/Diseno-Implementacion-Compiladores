@@ -1,0 +1,1 @@
+(let (five 6) (@ (print (lambda (x) (+ x five))) 4))

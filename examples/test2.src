@@ -1,1 +1,0 @@
-(tup (lambda (x y) (+ x y)) (lambda (x) (+ x 1)))

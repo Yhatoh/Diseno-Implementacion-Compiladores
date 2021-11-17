@@ -64,7 +64,7 @@ type instruction =
 | ILabel of string
 | IPush of arg
 | IPop of arg
-| ICall of string
+| ICall of arg
 | ICqo
 (* TO BE COMPLETED *)
 
@@ -111,10 +111,11 @@ let i_label (label : string) : instruction = ILabel label
 let iPush (a : arg) : instruction = IPush a
 let iPop (a : arg) : instruction = IPop a
 
-let iCall (f_str : string) : instruction = ICall f_str
-let iCall_print : instruction = iCall "print"
-let iCall_error_not_number = iCall "error_not_number"
-let iCall_error_not_boolean = iCall "error_not_boolean"
+let iCall_string (f_str : string) : instruction = ICall (FLabel f_str)
+let iCall_reg (r : arg) : instruction = ICall r
+let iCall_print : instruction = iCall_string "print"
+let iCall_error_not_number = iCall_string "error_not_number"
+let iCall_error_not_boolean = iCall_string "error_not_boolean"
 
 
 
@@ -172,7 +173,7 @@ let pp_instr instr : string =
   | ILabel tg -> sprintf "%s:" tg
   | IPush a -> sprintf "  push %s" (pp_arg a)
   | IPop a -> sprintf "  pop %s" (pp_arg a)
-  | ICall s -> sprintf "  call %s" s
+  | ICall a -> sprintf "  call %s" (pp_arg a)
   | ICqo -> "  cqo"
   (* TO BE COMPLETED *)
 

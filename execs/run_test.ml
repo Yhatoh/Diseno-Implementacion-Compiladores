@@ -587,7 +587,7 @@ let test_compile_print_int () =
       IPush (Reg RSI) ;
       IPush (Reg RDI) ;
       IMov (Reg RDI, Reg RAX) ;
-      ICall "print" ;
+      iCall_string "print" ;
       IPop (Reg RDI) ;
       IPop (Reg RSI) ;
       IPop (Reg RDX) ;
@@ -612,7 +612,7 @@ let test_compile_print_bool () =
       IPush (Reg RSI) ;
       IPush (Reg RDI) ;
       IMov (Reg RDI, Reg RAX) ;
-      ICall "print" ;
+      iCall_string "print" ;
       IPop (Reg RDI) ;
       IPop (Reg RSI) ;
       IPop (Reg RDX) ;
@@ -648,7 +648,7 @@ let test_compile_print_tuple () =
       IPush (Reg RSI) ;
       IPush (Reg RDI) ;
       IMov (Reg RDI, Reg RAX) ;
-      ICall "print" ;
+      iCall_string "print" ;
       IPop (Reg RDI) ;
       IPop (Reg RSI) ;
       IPop (Reg RDX) ;
@@ -688,7 +688,7 @@ let test_compile_func_app () =
       IPush (Reg RDI) ;
       IMov (Reg RAX, Const 4L) ;
       IMov (Reg RDI, Reg RAX) ;
-      ICall "f" ;
+      iCall_string "f" ;
       IPop (Reg RDI) ;
       IPop (Reg RSI) ;
       IPop (Reg RDX) ;
@@ -716,7 +716,7 @@ let test_compile_add1 () =
       IPush (Reg RDI) ;
       IMov (Reg RDI, Reg RAX) ;
       IMov (Reg RSI, Const 4L) ;
-      ICall "check_overflow_add" ;
+      iCall_string "check_overflow_add" ;
       IMov (Reg RAX, Ptr (RBP, Int64.minus_one)) ;
       IPop (Reg RDI) ;
       IPop (Reg RSI) ;
@@ -744,7 +744,7 @@ let test_compile_sub1 () =
       IPush (Reg RDI) ;
       IMov (Reg RDI, Reg RAX) ;
       IMov (Reg RSI, Const 4L) ;
-      ICall "check_overflow_sub" ;
+      iCall_string "check_overflow_sub" ;
       IMov (Reg RAX, Ptr (RBP, Int64.minus_one)) ;
       IPop (Reg RDI) ;
       IPop (Reg RSI) ;
@@ -783,7 +783,7 @@ let test_compile_add () =
         IPush (Reg RDI) ;
         IMov (Reg RDI, Ptr (RBP, Int64.minus_one)) ;
         IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 2L))) ;
-        ICall "check_overflow_add" ;
+        iCall_string "check_overflow_add" ;
         IPop (Reg RDI) ;
         IPop (Reg RSI) ;
         IPop (Reg RDX) ;
@@ -817,7 +817,7 @@ check instruction_list "same instruction_list"
       IPush (Reg RDI) ;
       IMov (Reg RDI, Ptr (RBP, Int64.minus_one)) ;
       IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 2L))) ;
-      ICall "check_overflow_sub" ;
+      iCall_string "check_overflow_sub" ;
       IPop (Reg RDI) ;
       IPop (Reg RSI) ;
       IPop (Reg RDX) ;
@@ -851,7 +851,7 @@ let test_compile_mul () =
         IPush (Reg RDI) ;
         IMov (Reg RDI, Ptr (RBP, Int64.minus_one)) ;
         IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 2L))) ;
-        ICall "check_overflow_mul" ;
+        iCall_string "check_overflow_mul" ;
         IPop (Reg RDI) ;
         IPop (Reg RSI) ;
         IPop (Reg RDX) ;
@@ -885,7 +885,7 @@ let test_compile_div () =
         IPush (Reg RSI) ;
         IPush (Reg RDI) ;
         IMov (Reg RDI, Ptr (RBP, (Int64.sub 0L 2L))) ;
-        ICall "check_div_by_0" ;
+        iCall_string "check_div_by_0" ;
         IPop (Reg RDI) ;
         IPop (Reg RSI) ;
         IPop (Reg RDX) ;
@@ -957,7 +957,7 @@ let test_compile_let () =
         IPush (Reg RDI) ;
         IMov (Reg RDI, Ptr (RBP, (Int64.sub 0L 2L))) ;
         IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 3L))) ;
-        ICall "check_overflow_add" ;
+        iCall_string "check_overflow_add" ;
         IPop (Reg RDI) ;
         IPop (Reg RSI) ;
         IPop (Reg RDX) ;
@@ -1006,7 +1006,7 @@ let test_compile_if () =
         IPush (Reg RDI) ;
         IMov (Reg RDI, Ptr (RBP, Int64.minus_one)) ;
         IMov (Reg RSI, Ptr (RBP, (Int64.sub 0L 2L))) ;
-        ICall "check_overflow_add" ;
+        iCall_string "check_overflow_add" ;
         IPop (Reg RDI) ;
         IPop (Reg RSI) ;
         IPop (Reg RDX) ;
