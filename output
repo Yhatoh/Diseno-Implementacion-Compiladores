@@ -1,0 +1,392 @@
+dune exec execs/run_compile.exe examples/test_no_print.src
+
+section .text
+extern check_overflow_add
+extern check_overflow_sub
+extern check_overflow_mul
+extern check_div_by_0
+extern indexError
+extern print
+extern typeError
+extern wrongArity
+global our_code_starts_here
+our_code_starts_here:
+  mov R15, RDI
+  add R15, 7
+  mov R11, 0xfffffffffffffff8
+  and R15, R11
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0xb0
+  jmp lambda_0_2_end
+lambda_0_2:
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x8
+  push R11
+  mov R11, RDI
+  sub R11, 0x3
+  mov RAX, qword[R11 + 24]
+  mov qword[RBP - 8], RAX
+  sub RSP, 0x58
+  pop R11
+  mov RAX, RSI
+  mov qword[RBP - 16], RAX
+  mov RAX, 0
+  mov qword[RBP - 24], RAX
+  mov RAX, qword[RBP - 16]
+  mov qword[RBP - 32], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 32]
+  jne error_not_number
+  mov qword[RBP - 32], RAX
+  mov RAX, qword[RBP - 24]
+  mov qword[RBP - 40], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 40]
+  jne error_not_number
+  mov qword[RBP - 40], RAX
+  mov RAX, qword[RBP - 32]
+  cmp RAX, qword[RBP - 40]
+  jg if_false_0_8
+  mov RAX, 0x6
+  jmp done_0_8
+if_false_0_8:
+  mov RAX, 0x2
+done_0_8:
+  mov qword[RBP - 16], RAX
+  and RAX, 0x3
+  cmp RAX, 0x2
+  mov RAX, qword[RBP - 16]
+  jne error_not_boolean
+  cmp RAX, 0x2
+  je if_false_0_3
+  mov RAX, 0x6
+  jmp done_0_3
+if_false_0_3:
+  mov RAX, RSI
+  mov qword[RBP - 16], RAX
+  mov RAX, 0xfffffffffffffffc
+  mov qword[RBP - 24], RAX
+  mov RAX, qword[RBP - 16]
+  mov qword[RBP - 32], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 32]
+  jne error_not_number
+  mov qword[RBP - 32], RAX
+  mov RAX, qword[RBP - 24]
+  mov qword[RBP - 40], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 40]
+  jne error_not_number
+  mov qword[RBP - 40], RAX
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RDI, qword[RBP - 32]
+  mov RSI, qword[RBP - 40]
+  call check_overflow_add
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  mov RAX, qword[RBP - 32]
+  add RAX, qword[RBP - 40]
+  mov qword[RBP - 16], RAX
+  mov RAX, qword[RBP - 8]
+  mov qword[RBP - 24], RAX
+  mov RAX, qword[RBP - 24]
+  mov qword[RBP - 32], RAX
+  and RAX, 0x3
+  cmp RAX, 0x3
+  mov RAX, qword[RBP - 32]
+  jne error_not_lambda
+  push R11
+  mov R11, RAX
+  sub RAX, 0x3
+  cmp qword[RAX], 0x1
+  push R10
+  mov R10, 0x1
+  jne error_wrong_arity
+  pop R10
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RDI, R11
+  mov R11, RAX
+  mov RAX, qword[RBP - 16]
+  mov RSI, RAX
+  call qword[R11 + 8]
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  pop R11
+done_0_3:
+  mov RSP, RBP
+  pop RBP
+  ret
+lambda_0_2_end:
+  push R11
+  mov R11, R15
+  add R15, 0x20
+  mov qword[R11], 0x1
+  mov qword[R11 + 8], lambda_0_2
+  mov qword[R11 + 16], 0x1
+  mov RAX, qword[RBP - 24]
+  mov qword[R11 + 24], RAX
+  mov RAX, R11
+  add RAX, 0x3
+  pop R11
+  mov qword[RBP - 16], RAX
+  jmp lambda_0_26_end
+lambda_0_26:
+  push RBP
+  mov RBP, RSP
+  sub RSP, 0x8
+  push R11
+  mov R11, RDI
+  sub R11, 0x3
+  mov RAX, qword[R11 + 24]
+  mov qword[RBP - 8], RAX
+  sub RSP, 0x58
+  pop R11
+  mov RAX, RSI
+  mov qword[RBP - 16], RAX
+  mov RAX, 0x4
+  mov qword[RBP - 24], RAX
+  mov RAX, qword[RBP - 16]
+  mov qword[RBP - 32], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 32]
+  jne error_not_number
+  mov qword[RBP - 32], RAX
+  mov RAX, qword[RBP - 24]
+  mov qword[RBP - 40], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 40]
+  jne error_not_number
+  mov qword[RBP - 40], RAX
+  mov RAX, qword[RBP - 32]
+  cmp RAX, qword[RBP - 40]
+  jg if_false_0_32
+  mov RAX, 0x6
+  jmp done_0_32
+if_false_0_32:
+  mov RAX, 0x2
+done_0_32:
+  mov qword[RBP - 16], RAX
+  and RAX, 0x3
+  cmp RAX, 0x2
+  mov RAX, qword[RBP - 16]
+  jne error_not_boolean
+  cmp RAX, 0x2
+  je if_false_0_27
+  mov RAX, 0x6
+  jmp done_0_27
+if_false_0_27:
+  mov RAX, RSI
+  mov qword[RBP - 16], RAX
+  mov RAX, 0xfffffffffffffffc
+  mov qword[RBP - 24], RAX
+  mov RAX, qword[RBP - 16]
+  mov qword[RBP - 32], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 32]
+  jne error_not_number
+  mov qword[RBP - 32], RAX
+  mov RAX, qword[RBP - 24]
+  mov qword[RBP - 40], RAX
+  and RAX, 0x3
+  cmp RAX, 0
+  mov RAX, qword[RBP - 40]
+  jne error_not_number
+  mov qword[RBP - 40], RAX
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RDI, qword[RBP - 32]
+  mov RSI, qword[RBP - 40]
+  call check_overflow_add
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  mov RAX, qword[RBP - 32]
+  add RAX, qword[RBP - 40]
+  mov qword[RBP - 16], RAX
+  mov RAX, qword[RBP - 8]
+  mov qword[RBP - 24], RAX
+  mov RAX, qword[RBP - 24]
+  mov qword[RBP - 32], RAX
+  and RAX, 0x3
+  cmp RAX, 0x3
+  mov RAX, qword[RBP - 32]
+  jne error_not_lambda
+  push R11
+  mov R11, RAX
+  sub RAX, 0x3
+  cmp qword[RAX], 0x1
+  push R10
+  mov R10, 0x1
+  jne error_wrong_arity
+  pop R10
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RDI, R11
+  mov R11, RAX
+  mov RAX, qword[RBP - 16]
+  mov RSI, RAX
+  call qword[R11 + 8]
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  pop R11
+done_0_27:
+  mov RSP, RBP
+  pop RBP
+  ret
+lambda_0_26_end:
+  push R11
+  mov R11, R15
+  add R15, 0x20
+  mov qword[R11], 0x1
+  mov qword[R11 + 8], lambda_0_26
+  mov qword[R11 + 16], 0x1
+  mov RAX, qword[RBP - 16]
+  mov qword[R11 + 24], RAX
+  mov RAX, R11
+  add RAX, 0x3
+  pop R11
+  mov qword[RBP - 24], RAX
+  mov RAX, 0x34
+  mov qword[RBP - 32], RAX
+  mov RAX, qword[RBP - 24]
+  mov qword[RBP - 40], RAX
+  mov RAX, qword[RBP - 40]
+  mov qword[RBP - 48], RAX
+  and RAX, 0x3
+  cmp RAX, 0x3
+  mov RAX, qword[RBP - 48]
+  jne error_not_lambda
+  push R11
+  mov R11, RAX
+  sub RAX, 0x3
+  cmp qword[RAX], 0x1
+  push R10
+  mov R10, 0x1
+  jne error_wrong_arity
+  pop R10
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RDI, R11
+  mov R11, RAX
+  mov RAX, qword[RBP - 32]
+  mov RSI, RAX
+  call qword[R11 + 8]
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
+  pop R11
+  mov RSP, RBP
+  pop RBP
+  ret
+error_not_number:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x1
+  call typeError
+error_not_boolean:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x2
+  call typeError
+error_not_tuple:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x3
+  call typeError
+error_not_lambda:
+  push RSI
+  push RDI
+  mov RSI, RAX
+  mov RDI, 0x4
+  call typeError
+index_too_high:
+  push RSI
+  push RDI
+  mov RDI, R11
+  mov RSI, [R10]
+  call indexError
+error_wrong_arity:
+  push RSI
+  push RDI
+  mov RDI, [R11]
+  mov RSI, R10
+  call wrongArity
+index_too_low:
+  push RSI
+  push RDI
+  mov RDI, R11
+  mov RSI, [R10]
+  mov RDI, 0
+  call indexError

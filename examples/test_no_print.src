@@ -1,1 +1,4 @@
-(let (five 6) (@ (print (lambda (x) (+ x five))) 4))
+(letrec
+  ((even (lambda (n) (if (<= n 0) true (@ odd (+ (print n) -1)))))
+    (odd  (lambda (n) (if (<= n 1) true (@ even (+ (print n) -1))))))
+  (@ odd 13))

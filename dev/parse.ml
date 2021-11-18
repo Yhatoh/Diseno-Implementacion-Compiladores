@@ -5,6 +5,9 @@ open CCSexp
 
 exception CTError of string
 
+let dash_to_underscore (name : string) : string =
+  (String.concat "_" (String.split_on_char '-' name))
+
 (* Applies ANF to a unary operation. *)
 let a_normal_form_unop (op : prim1) (arg : expr) : expr =
   (Let ("arg", arg, Prim1 (op, (Id "arg"))))
@@ -81,7 +84,7 @@ let rec parse_exp (sexp : sexp) : expr =
     | `Atom "sub1" -> Prim1 (Sub1, parse_exp e)
     | `Atom "not" -> Prim1 (Not, parse_exp e)
     | `Atom "print" -> Prim1 (Print, parse_exp e)  (* comment out this line if providing print via the sys interface *)
-    | `Atom name -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name)) [parse_exp e] (*Apply ((String.concat "_" (String.split_on_char '-' name)), [parse_exp e])*)
+    | `Atom name -> a_normal_form_apply (dash_to_underscore name) [parse_exp e] (*Apply ((dash_to_underscore name), [parse_exp e])*)
     | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
     )
   | `List [eop; e1; e2] -> (
@@ -107,12 +110,12 @@ let rec parse_exp (sexp : sexp) : expr =
       | `List params -> Lambda (List.map parse_arg_name params, parse_exp e2)
       | _ -> raise (CTError (sprintf "Not a valid lambda: %s" (to_string sexp)))
     )
-    | `Atom name -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name)) [parse_exp e1 ; parse_exp e2](*Apply (name, [parse_exp e1 ; parse_exp e2])*)
+    | `Atom name -> a_normal_form_apply (dash_to_underscore name) [parse_exp e1 ; parse_exp e2](*Apply (name, [parse_exp e1 ; parse_exp e2])*)
     | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
     )
   | `List [`Atom "if"; e1; e2; e3] -> If (parse_exp e1, parse_exp e2, parse_exp e3)
   | `List [ `Atom "set"; e; k; v ] -> (Let ("arg1", parse_exp e, Let ("arg2", parse_exp k, Let ("arg3", parse_exp v, Set (Id "arg1", Id "arg2", Id "arg3")))))
-  | `List (`Atom name :: e2) -> a_normal_form_apply (String.concat "_" (String.split_on_char '-' name)) (List.map parse_exp e2)(*Apply (name, List.map parse_exp e2)*)
+  | `List (`Atom name :: e2) -> a_normal_form_apply (dash_to_underscore name) (List.map parse_exp e2)(*Apply (name, List.map parse_exp e2)*)
   | _ -> raise (CTError (sprintf "Not a valid expr: %s" (to_string sexp)))
 and parse_recs (recs : sexp list) : (string * string list * expr) list =
   List.map (
@@ -145,12 +148,12 @@ let rec parse_prog (sexp : sexp) : prog =
     | `List [`Atom "def" ; `List (`Atom name :: args) ; body], _ ->
       let (funcdefs, expr) = parse_prog (`List tl) in
       let arg_names = List.map parse_arg_name args in
-      [ DefFun (name, arg_names, parse_exp body) ] @ funcdefs, expr
+      [ DefFun ((dash_to_underscore name), arg_names, parse_exp body) ] @ funcdefs, expr
     | `List (`Atom "record" :: (`Atom name :: atris)), _ ->
       let (funcdefs, expr) = parse_prog (`List tl) in
       let atris_names = List.map parse_arg_name atris in 
-      [ DefFun (name, atris_names, Tuple((List.map create_id atris_names))) ] 
-      @ (create_deffun name atris_names 0L) 
+      [ DefFun ((dash_to_underscore name), atris_names, Tuple((List.map create_id atris_names))) ] 
+      @ (create_deffun (dash_to_underscore name) atris_names 0L) 
       @ funcdefs, expr
     (*| `List (`Atom "defsys" :: `Atom name :: arg_spec), _ -> (
       match List.rev arg_spec with

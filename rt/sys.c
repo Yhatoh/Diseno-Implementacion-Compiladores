@@ -38,8 +38,10 @@ void typeError(u64 type, u64 givenValue) {
     printf("Expected integer, but got ");
   else if (type == ERROR_NOT_BOOLEAN)
     printf("Expected boolean, but got ");
-  else
+  else if (type == ERROR_NOT_TUPLE)
     printf("Expected tuple, but got ");
+  else if (type == ERROR_NOT_LAMBDA)
+    printf("Expected lambda, but got ");
 
   print_value(givenValue);
   printf(".\n");
