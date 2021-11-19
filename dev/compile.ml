@@ -879,9 +879,10 @@ let rec compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv 
                  iPush r10 ;
                  iMov_arg_arg r11 (Ptr(RBP, st)) ;
                  iMov_arg_arg r10 (Ptr(RBP, slot_lambda)) ;
+                 iSub_arg_const r10 3L;
                  iMov_arg_arg (Ptr(R10, (Int64.add 3L (Int64.of_int pos)))) r11 ;
+                 iPop r10 ;
                  iPop r11 ;
-                 iPop r10;
                 ] 
             in 
             instruct @

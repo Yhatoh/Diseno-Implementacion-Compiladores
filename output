@@ -17,7 +17,7 @@ our_code_starts_here:
   and R15, R11
   push RBP
   mov RBP, RSP
-  sub RSP, 0xb0
+  sub RSP, 0xc0
   jmp lambda_0_2_end
 lambda_0_2:
   push RBP
@@ -28,7 +28,7 @@ lambda_0_2:
   sub R11, 0x3
   mov RAX, qword[R11 + 24]
   mov qword[RBP - 8], RAX
-  sub RSP, 0x58
+  sub RSP, 0x60
   pop R11
   mov RAX, RSI
   mov qword[RBP - 16], RAX
@@ -67,6 +67,24 @@ done_0_8:
   jmp done_0_3
 if_false_0_3:
   mov RAX, RSI
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RDI, RAX
+  call print
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
   mov qword[RBP - 16], RAX
   mov RAX, 0xfffffffffffffffc
   mov qword[RBP - 24], RAX
@@ -161,8 +179,8 @@ lambda_0_2_end:
   add RAX, 0x3
   pop R11
   mov qword[RBP - 16], RAX
-  jmp lambda_0_26_end
-lambda_0_26:
+  jmp lambda_0_27_end
+lambda_0_27:
   push RBP
   mov RBP, RSP
   sub RSP, 0x8
@@ -171,7 +189,7 @@ lambda_0_26:
   sub R11, 0x3
   mov RAX, qword[R11 + 24]
   mov qword[RBP - 8], RAX
-  sub RSP, 0x58
+  sub RSP, 0x60
   pop R11
   mov RAX, RSI
   mov qword[RBP - 16], RAX
@@ -193,23 +211,41 @@ lambda_0_26:
   mov qword[RBP - 40], RAX
   mov RAX, qword[RBP - 32]
   cmp RAX, qword[RBP - 40]
-  jg if_false_0_32
+  jg if_false_0_33
   mov RAX, 0x6
-  jmp done_0_32
-if_false_0_32:
+  jmp done_0_33
+if_false_0_33:
   mov RAX, 0x2
-done_0_32:
+done_0_33:
   mov qword[RBP - 16], RAX
   and RAX, 0x3
   cmp RAX, 0x2
   mov RAX, qword[RBP - 16]
   jne error_not_boolean
   cmp RAX, 0x2
-  je if_false_0_27
+  je if_false_0_28
   mov RAX, 0x6
-  jmp done_0_27
-if_false_0_27:
+  jmp done_0_28
+if_false_0_28:
   mov RAX, RSI
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RDI, RAX
+  call print
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
   mov qword[RBP - 16], RAX
   mov RAX, 0xfffffffffffffffc
   mov qword[RBP - 24], RAX
@@ -287,16 +323,16 @@ if_false_0_27:
   pop R11
   pop R10
   pop R11
-done_0_27:
+done_0_28:
   mov RSP, RBP
   pop RBP
   ret
-lambda_0_26_end:
+lambda_0_27_end:
   push R11
   mov R11, R15
   add R15, 0x20
   mov qword[R11], 0x1
-  mov qword[R11 + 8], lambda_0_26
+  mov qword[R11 + 8], lambda_0_27
   mov qword[R11 + 16], 0x1
   mov RAX, qword[RBP - 16]
   mov qword[R11 + 24], RAX
@@ -304,9 +340,41 @@ lambda_0_26_end:
   add RAX, 0x3
   pop R11
   mov qword[RBP - 24], RAX
-  mov RAX, 0x34
+  push R11
+  push R10
+  mov R11, qword[RBP - 24]
+  mov R10, qword[RBP - 16]
+  mov qword[R10 + 24], R11
+  pop R10
+  pop R11
+  push R11
+  push R10
+  mov R11, qword[RBP - 16]
+  mov R10, qword[RBP - 24]
+  mov qword[R10 + 24], R11
+  pop R10
+  pop R11
+  mov RAX, 0x2c
   mov qword[RBP - 32], RAX
   mov RAX, qword[RBP - 24]
+  push R10
+  push R11
+  push R9
+  push R8
+  push RCX
+  push RDX
+  push RSI
+  push RDI
+  mov RDI, RAX
+  call print
+  pop RDI
+  pop RSI
+  pop RDX
+  pop RCX
+  pop R8
+  pop R9
+  pop R11
+  pop R10
   mov qword[RBP - 40], RAX
   mov RAX, qword[RBP - 40]
   mov qword[RBP - 48], RAX
