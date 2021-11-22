@@ -1,7 +1,7 @@
-NAME: lte - check type e1 is bool
+NAME: add - check type e1 is boolean
 DESCRIPTION: Expected integer, but got boolean in the first expression
 STATUS: RT error
 SRC:
-(<= true -2)
+(+ true 2)
 EXPECTED:
 Expected integer, but got true\.

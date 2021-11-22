@@ -1,11 +1,1 @@
-(
- (def (h t) (set
-    t
-    1
-    (print (tup -21 -22 (tup (tup (tup (tup))))))
-    )
-  )
- (let (t (tup (print (not false)) -3 42)) (get
-  	(print (h t))
-    0))
-)
+(+ (tup 1 2 3) 2)

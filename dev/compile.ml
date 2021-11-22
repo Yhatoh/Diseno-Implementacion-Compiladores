@@ -514,7 +514,7 @@ and compile_prim1 (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_f
   @ (unop_to_instr_list op)
 (* Compiles a binary operation. *)
 and compile_prim2 (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) (op : prim2) (n1 : tag texpr) (n2 : tag texpr) (tag : int) : instruction list =
-  let next_slot = (Int64.add 1L slot) in
+  let next_slot = (Int64.sub slot 1L) in
   let rbp_ptr = rbp_pointer slot in
   let compile_e (n : tag texpr) (slot : int64): instruction list = compile_expr n slot_env slot fenv tag_fun total_params in
   let compiled_e1 = compile_e n1 slot @ type_of_binops op slot in
@@ -568,7 +568,7 @@ and compile_prim2 (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_f
 (* Compiles a let binding. *)
 and compile_let (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) (x : string) (v : tag texpr) (e : tag texpr) : instruction list =
   let rbp_ptr = rbp_pointer slot in
-  let next_slot = (Int64.add 1L slot) in
+  let next_slot = (Int64.sub slot 1L) in
   let mov_rax_to_rbp = iMov_arg_arg rbp_ptr rax in
   let new_slot_env : slot_env = extend_slot_env x slot slot_env in
     (compile_expr v slot_env slot fenv tag_fun total_params)
@@ -612,7 +612,7 @@ and compile_apply (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_f
   @ pop_r10_r11
 (* Compilation of tuple creation. *)
 and compile_tuple (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) (attrs : tag texpr list) : instruction list =
-  let next_slot = (Int64.add 1L slot) in
+  let next_slot = (Int64.sub slot 1L) in
   let compile_tuple_help (lst : tag texpr list) : instruction list =
     let rec compile_lexpr (lst : tag texpr list) (param_pos : int) : instruction list =
       match lst with
@@ -645,7 +645,7 @@ and compile_tuple (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_f
 (* Compilation of the set tuple value *)
 and compile_set (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) (t : tag texpr) (pos : tag texpr) (value : tag texpr) : instruction list =
   let rbp_ptr = rbp_pointer slot in
-  let next_slot = (Int64.add 1L slot) in
+  let next_slot = (Int64.sub slot 1L) in
   let compiled_t = compile_expr t slot_env slot fenv tag_fun total_params in 
   let compiled_pos = compile_expr pos slot_env next_slot fenv tag_fun total_params in
   let compiled_value = compile_expr value slot_env (Int64.sub next_slot 1L) fenv tag_fun total_params in 
@@ -825,7 +825,7 @@ and compile_lamapply (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (ta
   [iPop r11]
 (* compiles a set of recursive first class function definitions *)
 and compile_letrec (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) (lbds : (string * string list * tag texpr * tag) list) (e : tag texpr) : instruction list =
-  let next_slot = (Int64.add 1L slot) in
+  let next_slot = (Int64.sub slot 1L) in
   let rec extend_env_with_lbds (lbds : (string * string list * tag texpr * tag) list) (slot : int64) (new_slot_env : slot_env) : slot_env =
     match lbds with
     | [] -> new_slot_env

@@ -1,0 +1,7 @@
+NAME: add1 - check overflow
+DESCRIPTION: add1 produces overflow
+STATUS: RT error
+SRC:
+(add1 2305843009213693951)
+EXPECTED:
+(\+ 2305843009213693951 1) will produce overflow\.

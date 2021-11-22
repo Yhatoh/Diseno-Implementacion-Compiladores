@@ -1,0 +1,6 @@
+NAME: set
+DESCRIPTION: mutate a tuple
+SRC:
+(set (tup 20 true (tup)) 2 true)
+EXPECTED:
+|ORACLE

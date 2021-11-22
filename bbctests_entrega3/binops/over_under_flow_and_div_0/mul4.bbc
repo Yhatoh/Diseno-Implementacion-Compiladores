@@ -1,0 +1,7 @@
+NAME: mul - check underflow
+DESCRIPTION: mul produces underflow
+STATUS: RT error
+SRC:
+(* -2305843009213693952 2)
+EXPECTED:
+(\* -2305843009213693952 2) will produce underflow\.

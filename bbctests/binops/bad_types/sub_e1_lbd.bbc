@@ -1,0 +1,7 @@
+NAME: lte - check type e1 is lambda
+DESCRIPTION: Expected integer, but got lambda in the first expression
+STATUS: RT error
+SRC:
+(- (lambda (x) (+ 2 x)) 2)
+EXPECTED:
+Expected integer, but got <clos:1>\.

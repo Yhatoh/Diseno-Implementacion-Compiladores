@@ -1,0 +1,6 @@
+NAME: lambda
+DESCRIPTION: lambda using with let
+SRC:
+(let (f (lambda (a) (+ a 1))) (@ f 1))
+EXPECTED:
+|ORACLE

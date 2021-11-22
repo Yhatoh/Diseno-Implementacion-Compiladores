@@ -1,4 +1,4 @@
-NAME: lte - check type e2 is tuple
+NAME: mul - check type e2 is tuple
 DESCRIPTION: Expected integer, but got tuple in the second expression
 STATUS: RT error
 SRC:

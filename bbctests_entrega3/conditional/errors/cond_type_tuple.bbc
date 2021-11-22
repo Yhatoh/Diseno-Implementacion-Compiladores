@@ -1,0 +1,7 @@
+NAME: if - check type cond is tuple
+DESCRIPTION: Expected a boolean in condition, but got an tuple
+STATUS: RT error
+SRC:
+(if (tup 1 false (tup)) true false)
+EXPECTED:
+Expected boolean, but got (tup 1 false (tup))\.

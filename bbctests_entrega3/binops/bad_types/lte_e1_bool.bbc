@@ -1,4 +1,4 @@
-NAME: lte - check type e1 is bool
+NAME: mul - check type e1 is bool
 DESCRIPTION: Expected integer, but got boolean in the first expression
 STATUS: RT error
 SRC:

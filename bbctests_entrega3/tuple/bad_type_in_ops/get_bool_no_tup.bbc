@@ -1,0 +1,7 @@
+NAME: get - expect tuple, get boolean
+DESCRIPTION: expected tuple, but got boolean
+STATUS: RT error
+SRC:
+(get true 3)
+EXPECTED:
+Expected tuple, but got true\.

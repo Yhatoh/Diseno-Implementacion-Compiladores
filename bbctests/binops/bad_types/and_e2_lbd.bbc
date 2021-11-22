@@ -1,0 +1,7 @@
+NAME: and - check type e2 is lambda
+DESCRIPTION: Expected boolean, but got lambda in the second expression
+STATUS: RT error
+SRC:
+(and true (lambda (x) (+ 2 x)))
+EXPECTED:
+Expected boolean, but got <clos:1>\.

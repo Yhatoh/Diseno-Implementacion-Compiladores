@@ -1,0 +1,6 @@
+NAME: if
+DESCRIPTION: conditional
+SRC:
+(if (and true false) true false)
+EXPECTED:
+|ORACLE

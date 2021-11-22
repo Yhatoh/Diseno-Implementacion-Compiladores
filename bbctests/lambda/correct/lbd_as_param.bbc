@@ -1,0 +1,9 @@
+NAME: lambda
+DESCRIPTION: lambda as a param of a function
+SRC:
+(
+  (def (f f2 x) (@ f2 x))
+  (f (lambda (a) (+ a 1)) 1)
+)
+EXPECTED:
+|ORACLE
