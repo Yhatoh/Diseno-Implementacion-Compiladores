@@ -1,0 +1,8 @@
+NAME: letrec - rec with one lambda
+DESCRIPTION: recursion with one lambda
+SRC:
+(letrec
+  ((fact (lambda (n) (if (<= n 1) 1 (* n (@ fact (- n 1)))))))
+  (@ fact 4))
+EXPECTED:
+|ORACLE

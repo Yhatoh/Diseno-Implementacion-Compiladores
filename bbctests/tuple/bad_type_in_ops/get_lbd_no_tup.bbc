@@ -1,0 +1,7 @@
+NAME: get - expect tuple, get lambda
+DESCRIPTION: expected tuple, but got lambda
+STATUS: RT error
+SRC:
+(get (lambda (x) (+ 2 x)) 3)
+EXPECTED:
+Expected tuple, but got <clos:1>\.
