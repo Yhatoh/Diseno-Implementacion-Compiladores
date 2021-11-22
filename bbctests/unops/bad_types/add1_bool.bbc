@@ -1,4 +1,4 @@
-NAME: add1 - check type
+NAME: add1 - check type boolean
 DESCRIPTION: Expected integer, but got boolean
 STATUS: RT error
 SRC:

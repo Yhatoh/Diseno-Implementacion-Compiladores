@@ -1106,7 +1106,7 @@ let ocaml_tests = [
     test_case "A number" `Quick test_parse_int ;
     test_case "A variable" `Quick test_parse_var ;
     test_case "A boolean" `Quick test_parse_bool ;
-    (*test_case "A tuple" `Quick test_parse_tuple ;
+    test_case "A tuple" `Quick test_parse_tuple ;
     test_case "An increment" `Quick test_parse_add1 ;
     test_case "A decrement" `Quick test_parse_sub1 ;
     test_case "An addition" `Quick test_parse_add ;
@@ -1117,14 +1117,12 @@ let ocaml_tests = [
     test_case "An if clause" `Quick test_parse_fork ;
     test_case "A definition" `Quick test_parse_let ;
     test_case "A lambda with no parameters" `Quick test_parse_lambda_empty ;
-    test_case "A lambda" `Quick test_parse_lambda ;
     test_case "A letrec with no lambdas" `Quick test_parse_letrec_empty ;
-    test_case "A letrec with an apply" `Quick test_parse_letrec ;
     test_case "A compound expression" `Quick test_parse_compound ;
     test_case "An invalid s-expression" `Quick test_parse_error ;
-    test_case "A record definition" `Quick test_parse_record ;*)
+    test_case "A record definition" `Quick test_parse_record ;
   ] ;
-  (*"interp", [
+  "interp", [
     test_case "A number" `Quick test_interp_num ;
     test_case "A variable" `Quick test_interp_var ;
     test_case "A boolean" `Slow test_interp_bool ;
@@ -1194,8 +1192,6 @@ let ocaml_tests = [
     test_case "Tag a <=" `Quick test_tag_lte;
     test_case "Tag a let" `Quick test_tag_let;
     test_case "Tag a if" `Quick test_tag_if;
-
-    test_case "Tag a tuple" `Quick test_tag_tup;
     test_case "Tag a tuple get" `Quick test_tag_get;
     test_case "Tag a tuple set" `Quick test_tag_set;
     
@@ -1233,7 +1229,7 @@ let ocaml_tests = [
     test_case "Addition of true" `Quick test_error_III ;
     test_case "And of 5" `Quick test_error_BBB ;
     test_case "Lesser than true" `Quick test_error_IIB
-  ]*)
+  ]
 ]     
 
 (* Entry point of tester *)

@@ -1,0 +1,7 @@
+NAME: get - expect int, get boolean
+DESCRIPTION: expected tuple, but got boolean
+STATUS: RT error
+SRC:
+(get (set (tup 20 true (tup)) 2 true) (lambda (x) (+ 2 x)))
+EXPECTED:
+Expected integer, but got <clos:1>\.

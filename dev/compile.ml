@@ -1499,6 +1499,7 @@ index_too_high:
 error_wrong_arity:
   push RSI
   push RDI
+  SUB R11, 0x3
   mov RDI, [R11]
   mov RSI, R10
   call wrongArity
