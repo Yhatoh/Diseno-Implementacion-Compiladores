@@ -34,8 +34,11 @@ let a_normal_form_apply (f_name : string) (arg_list : expr list) : expr =
     match id_strs with
     | [] -> Apply (f_name, id_exprs)
     | s_hd::s_tl ->
-      let a_hd::a_tl = args in
-      Let (s_hd, a_hd, assign_id_and_execute f_name a_tl id_exprs s_tl)
+      begin match args with 
+        | a_hd::a_tl ->
+          Let (s_hd, a_hd, assign_id_and_execute f_name a_tl id_exprs s_tl) 
+        | [] -> raise (CTError "Bad assign")
+      end 
   in
   assign_id_and_execute f_name arg_list arg_ids_exprs ids_strs
 
@@ -47,8 +50,11 @@ let a_normal_form_lamapply (lbd : expr) (arg_list : expr list) : expr =
     match id_strs with
     | [] -> Let (arg_lbd, lbd, LamApply (Id arg_lbd, id_exprs))
     | s_hd::s_tl ->
-      let a_hd::a_tl = args in
-      Let (s_hd, a_hd, assign_id_and_execute lbd a_tl id_exprs s_tl)
+      begin match args with 
+        | a_hd::a_tl ->
+          Let (s_hd, a_hd, assign_id_and_execute lbd a_tl id_exprs s_tl) 
+        | [] -> raise (CTError "Bad assign")
+      end 
   in
   assign_id_and_execute lbd arg_list arg_ids_exprs ids_strs
 
@@ -58,10 +64,13 @@ let a_normal_form_tuple (attr_list : expr list) : expr =
   let rec assign_id_and_execute (args : expr list) (id_exprs : expr list) (id_strs : string list) : expr =
     match id_strs with
     | [] -> Tuple id_exprs
-    | s_hd::s_tl ->let a_hd::a_tl = args in
-                   Let (s_hd, a_hd, assign_id_and_execute a_tl id_exprs s_tl)
+    | s_hd::s_tl ->
+      begin match args with 
+        | a_hd::a_tl ->
+          Let (s_hd, a_hd, assign_id_and_execute a_tl id_exprs s_tl)
+        | [] -> raise (CTError "Bad assign")
+      end 
   in
-
   assign_id_and_execute attr_list arg_ids_exprs ids_strs
 
 
