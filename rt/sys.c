@@ -233,9 +233,9 @@ void print_heap(u64* heap_start, u64* heap_end){
 }
 
 void print_heaps(){
-  printf("|\n|=======HEAP 1==========\n");
+  printf("|\n|=======HEAP 1 %s==========\n", (HEAP_START == FROM_SPACE ? "FROM_SPACE" : "TO_SPACE"));
   print_heap(HEAP_START, HEAP_MID-1);
-  printf("|=======HEAP 2==========\n");
+  printf("|=======HEAP 2 %s==========\n", (HEAP_MID == FROM_SPACE ? "FROM_SPACE" : "TO_SPACE"));
   print_heap(HEAP_MID, HEAP_END);
   printf("|=================\n\n");
 }
@@ -299,8 +299,8 @@ u64* collect(u64* cur_frame, u64* cur_sp) {
   printf("%p\n", FROM_SPACE);
   printf("%p\n", TO_SPACE);
   // init spaces
-  ALLOC_PTR = FROM_SPACE;
-  SCAN_PTR = FROM_SPACE;
+  ALLOC_PTR = TO_SPACE;
+  SCAN_PTR = TO_SPACE;
   // scan stack and copy roots
   print_stack(cur_frame, cur_sp);
   for (u64* i = cur_sp; i < cur_frame; i++) {
@@ -322,11 +322,11 @@ u64* collect(u64* cur_frame, u64* cur_sp) {
 u64* try_gc(u64* alloc_ptr, u64 words_needed, u64* cur_frame, u64* cur_sp) {
   //print_stack(cur_frame, cur_sp);
   printf("XDDDDDDDDDDD\n");
-  if (USE_GC==1 && alloc_ptr + words_needed > FROM_SPACE + HEAP_SIZE) {
+  if (USE_GC==1 && alloc_ptr + words_needed > TO_SPACE + HEAP_SIZE) {
     printf("| need memory: GC!\n");
     alloc_ptr = collect(cur_frame, cur_sp);
   }
-  if (alloc_ptr + words_needed > FROM_SPACE + HEAP_SIZE) {
+  if (alloc_ptr + words_needed > TO_SPACE + HEAP_SIZE) {
     printf("| Error: out of memory!\n\n");
     print_stack(cur_frame, cur_sp);
     print_heaps();
@@ -373,15 +373,15 @@ int main(int argc, char** argv) {
   HEAP_START = (u64*)(((u64)heap + 7) & 0xfffffffffffffff8);
   /* TBD: initialize HEAP_MID, HEAP_END, FROM_SPACE, TO_SPACE */
   HEAP_MID = (u64*)((((u64)heap + (HEAP_SIZE * 8)) + 7) & 0xfffffffffffffff8);   /* TBD */
-  HEAP_END = (u64*)((((u64)heap + ((HEAP_SIZE * 8) * 2)) + 7) & 0xfffffffffffffff8);;   /* TBD */
-  FROM_SPACE = HEAP_START; /* TBD */
-  TO_SPACE = HEAP_MID;   /* TBD */
+  HEAP_END = (u64*)((((u64)heap + ((HEAP_SIZE * 8) * 2 - 8)) + 7) & 0xfffffffffffffff8);;   /* TBD */
+  FROM_SPACE = HEAP_MID; /* TBD */
+  TO_SPACE = HEAP_START;   /* TBD */
 
   /* Go! */
   /* Q: when do you need to call `free(heap)`? */
 
   u64 result = our_code_starts_here(HEAP_START);
-  print_value(result);
+  //print_value(result);
   printf("\n");
   free(heap);
   return 0;
