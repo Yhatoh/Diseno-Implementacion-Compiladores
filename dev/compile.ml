@@ -479,6 +479,31 @@ let binop_boolean_to_instr_list (second_arg_eval : instruction list) (tag : int)
   second_arg_eval @
   [i_label skip_label]
 
+let gc_snippet (words_needed : int64) (tag : tag) (tag_fun : tag) : instruction list = 
+  (store_r10_r11) @
+  (store_first_6_args) @
+  [iCall_string "getUseGC"] @
+  pop_first_6_args @
+  pop_r10_r11 @
+  [
+    iCmp_arg_const rax 1L;
+    i_jne (sprintf "not_gc_%d_%d" tag tag_fun)
+  ] @
+  (store_r10_r11) @
+  (store_first_6_args) @
+  [
+    iMov_arg_arg rdi r15;
+    iMov_arg_const rsi words_needed;
+    iMov_arg_arg rdx rbp;
+    iMov_arg_arg rcx rsp;
+    iCall_string "try_gc";
+  ] @
+  pop_first_6_args @
+  pop_r10_r11 @
+  [
+    iMov_arg_arg r15 rax;
+    i_label (sprintf "not_gc_%d_%d" tag tag_fun)
+  ]
 
 (* Compiles the value binding to an identifier. *)
 let rec compile_tid (slot_env : slot_env) (s : string) : instruction list =
@@ -635,30 +660,7 @@ and compile_tuple (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_f
       iPop r11
     ]
   in
-  (store_r10_r11) @
-  (store_first_6_args) @
-  [iCall_string "getUseGC"] @
-  pop_first_6_args @
-  pop_r10_r11 @
-  [
-    iCmp_arg_const rax 1L;
-    i_jne (sprintf "not_gc_%d_%d" tag tag_fun)
-  ] @
-  (store_r10_r11) @
-  (store_first_6_args) @
-  [
-    iMov_arg_arg rdi r15;
-    iMov_arg_const rsi (Int64.of_int num_attrs);
-    iMov_arg_arg rdx rbp;
-    iMov_arg_arg rcx rsp;
-    iCall_string "try_gc";
-  ] @
-  pop_first_6_args @
-  pop_r10_r11 @
-  [
-    iMov_arg_arg r15 rax;
-    i_label (sprintf "not_gc_%d_%d" tag tag_fun)
-  ] @
+  (gc_snippet (Int64.of_int num_attrs) tag tag_fun) @ 
   (compile_tuple_help attrs) @
   [
     iAdd_arg_const r15 7L ;
@@ -710,6 +712,7 @@ and compile_set (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun
     iPop r10 ;
     iMov_arg_to_RAX rbp_ptr
   ] 
+(* Compilation of a lambda closure *)
 and compile_lambda (slot_env : slot_env) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) (arg_names : string list) (e : tag texpr) (t : tag) : instruction list =
   let start_lambda = (sprintf "lambda_%d_%d" tag_fun t) in 
   let end_lambda = (sprintf "lambda_%d_%d_end" tag_fun t) in
@@ -785,6 +788,8 @@ and compile_lambda (slot_env : slot_env) (fenv : comp_fenv) (tag_fun : tag) (tot
     ] 
   in 
   let new_slot_value = (Int64.add (Int64.mul cant_vars (-1L)) (-1L)) in
+  
+  (gc_snippet (Int64.of_int ((List.length clean_lambda_env) + 3)) t tag_fun)@
   [
    i_jmp end_lambda ;
    i_label start_lambda ; 

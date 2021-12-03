@@ -246,82 +246,74 @@ void swap(u64** a, u64** b){
   *b = aux;
 }
 
-u64 size_of_ptr(u64* o){
-  if (TUP_TAG == (((u64)*o) & 3LL)) { // is tuple
-    u64* tuplePtr = (u64*)(((u64)*o) - TUP_TAG);
-    u64 size = (*tuplePtr / ARITHMETIC_SHIFT_VAL);
+u64 size_of_ptr(u64* o, u64 tag){
+  if (TUP_TAG == tag) { // is tuple
+
+    u64 size = (*o / ARITHMETIC_SHIFT_VAL);
     return size + 1;
-  } else if (LBD_TAG == (((u64)*o) & 3LL)) {
-    u64* lbdPTR = (u64*)(((u64)*o) - LBD_TAG);
-    u64 freeVars = *(lbdPTR + 2);
+  
+  } else if (LBD_TAG == tag) {
+  
+    u64 freeVars = *(o + 2);
     return freeVars + 3;
+  
   }
   return -1;
 }
 
-u64* copy(u64* o){
-  u64 tag_o = (((u64)*o) & 3LL);
-  if(is_heap_ptr(*o) && (NUM_TAG != tag_o) && (BOOL_TAG != tag_o)){
-    DEBUG(tag_o);
-    printf("XDDD %p\n", o);
-    u64* aux_o = ALLOC_PTR;
-    u64 size_o = size_of_ptr(o);
-    DEBUG(size_o);
-    u64* o_no_tag = (u64*)((u64)*o - tag_o);
+u64* copy(u64* o, u64 tag){
+  u64* new_o = ALLOC_PTR;
+  u64 size_o = size_of_ptr(o, tag);
 
-    ALLOC_PTR = ALLOC_PTR + size_o;
+  ALLOC_PTR = ALLOC_PTR + size_o;
 
-    for(u64 i = 0; i < size_o; i++){
-      if((LBD_TAG == tag_o) && (i < 3)){
-        *(aux_o + i) = *(o_no_tag + i);
-      } else {
-        *(aux_o + i) = (u64)copy(o_no_tag + 1);
-      }
-    }
-    /*
-    *o -> valor
-    valor -> puntero a otra cosa
-    copiamos lo que apunta el valor hacia el otro heap
-    */
-    *o = (((u64)aux_o) + tag_o);
+  for(u64 i = 0; i < size_o; i++){
+    *(new_o + i) = *(o + i);
   }
-  return o;
+
+  return new_o;
 }
 
 u64* collect(u64* cur_frame, u64* cur_sp) {
-  printf("ANTES\n");
-  print_heaps();
+  //printf("ANTES\n");
+  //print_heaps();
   /* TBD: see https://en.wikipedia.org/wiki/Cheney%27s_algorithm */
   // swap from-space to-space
-  printf("%p\n", FROM_SPACE);
-  printf("%p\n", TO_SPACE);
   swap(&FROM_SPACE, &TO_SPACE);
-  printf("%p\n", FROM_SPACE);
-  printf("%p\n", TO_SPACE);
   // init spaces
   ALLOC_PTR = TO_SPACE;
   SCAN_PTR = TO_SPACE;
   // scan stack and copy roots
-  print_stack(cur_frame, cur_sp);
-  for (u64* i = cur_sp; i < cur_frame; i++) {
+  //print_stack(cur_frame, cur_sp);
+  for (u64* root = cur_sp; root < cur_frame; root++) {
     //printf("%p\n", i);
-    i = copy(i);
+    u64 tag_root = (((u64)*root) & 3LL);
+    u64* root_no_tag = (u64*)(((u64)*root) - tag_root);
+    if(is_heap_ptr((u64)root_no_tag) && (NUM_TAG != tag_root) && (BOOL_TAG != tag_root)){
+      *root = ((u64)copy(root_no_tag, tag_root)) + tag_root;
+    }
   }
   // scan objects in the heap
-  SCAN_PTR = ALLOC_PTR;
+  while(SCAN_PTR < ALLOC_PTR){
+    u64 tag_scan = (((u64)*SCAN_PTR) & 3LL);
+    u64* scan_no_tag = (u64*)(((u64)*SCAN_PTR) - tag_scan);
+    if(is_heap_ptr((u64)scan_no_tag) && (NUM_TAG != tag_scan) && (BOOL_TAG != tag_scan)){
+      *SCAN_PTR = ((u64)copy(scan_no_tag, tag_scan)) + tag_scan;
+    }
+    SCAN_PTR++;
+  }
   // clean old space
-  //for(u64* i = TO_SPACE; i < TO_SPACE + HEAP_SIZE; i++){
-  //  *i = 0x0;
-  //}
-  printf("DESPUES\n");
-  print_heaps();
+  for(u64* i = FROM_SPACE; i < FROM_SPACE + HEAP_SIZE; i++){
+    *i = 0x0;
+  }
+  //printf("DESPUES\n");
+  //print_heaps();
   return ALLOC_PTR;
 }
 
 /* trigger GC if enabled and needed, out-of-memory error if insufficient */
 u64* try_gc(u64* alloc_ptr, u64 words_needed, u64* cur_frame, u64* cur_sp) {
   //print_stack(cur_frame, cur_sp);
-  printf("XDDDDDDDDDDD\n");
   if (USE_GC==1 && alloc_ptr + words_needed > TO_SPACE + HEAP_SIZE) {
     printf("| need memory: GC!\n");
     alloc_ptr = collect(cur_frame, cur_sp);
@@ -381,7 +373,8 @@ int main(int argc, char** argv) {
   /* Q: when do you need to call `free(heap)`? */
 
   u64 result = our_code_starts_here(HEAP_START);
-  //print_value(result);
+  //print_heaps();
+  print_value(result);
   printf("\n");
   free(heap);
   return 0;

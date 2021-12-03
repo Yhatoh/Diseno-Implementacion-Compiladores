@@ -1,5 +1,1 @@
-(let (y (get (tup 1 (tup 2 (tup 3 2 3)) 3) 2))
-  (let (x (tup 1 2 3))
-    (tup y x)
-  )
-)
+(print (tup 1 2 3 (tup false true 0 1 -2000 (tup 1 (tup) (tup)))))
