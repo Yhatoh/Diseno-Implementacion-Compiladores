@@ -1,0 +1,7 @@
+NAME: lambda - check type is tuple
+DESCRIPTION: expected lambda, but got tuple
+STATUS: RT error
+SRC:
+(@ (tup 1 2 3) 1)
+EXPECTED:
+Expected lambda, but got (tup 1 2 3)\.

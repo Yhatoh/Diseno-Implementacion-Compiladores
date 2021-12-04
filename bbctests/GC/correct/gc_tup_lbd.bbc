@@ -1,0 +1,18 @@
+NAME: GC - clean memory && alloc tup && alloc lbd
+DESCRIPTION: clean the memory to allocate a tuple and lambda
+PARAMS: STACK_SIZE=0x800000, HEAP_SIZE=16, USE_GC=1
+SRC:
+(
+  (def (f) (get (tup (tup 1 2 3) (tup 1 2 3) (tup 8 -20) 1) 3))
+  (let (one (f)) 
+    (let (two 2)
+      (let (three 3)
+        (let (four 4) 
+          (@ (lambda (x) (+ x (+ one (+ two (+ three (+ four one)))))) 1)
+        )
+      )
+    )
+  )
+)
+EXPECTED:
+12

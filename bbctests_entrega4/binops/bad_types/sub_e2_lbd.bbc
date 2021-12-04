@@ -1,0 +1,7 @@
+NAME: sub - check type e2 is lambda
+DESCRIPTION: Expected integer, but got lambda in the second expression
+STATUS: RT error
+SRC:
+(- 2 (lambda (x) (+ 2 x)))
+EXPECTED:
+Expected integer, but got <clos:1>\.

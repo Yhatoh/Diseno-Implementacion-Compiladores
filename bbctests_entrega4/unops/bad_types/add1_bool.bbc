@@ -1,0 +1,7 @@
+NAME: add1 - check type boolean
+DESCRIPTION: Expected integer, but got boolean
+STATUS: RT error
+SRC:
+(add1 true)
+EXPECTED:
+Expected integer, but got true\.

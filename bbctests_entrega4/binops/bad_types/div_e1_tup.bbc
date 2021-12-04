@@ -1,0 +1,7 @@
+NAME: div - check type e1 is tuple
+DESCRIPTION: Expected integer, but got tuple in the first expression
+STATUS: RT error
+SRC:
+(/ (tup 1 2 3) -2)
+EXPECTED:
+Expected integer, but got (tup 1 2 3)\.

@@ -1,0 +1,6 @@
+NAME: get
+DESCRIPTION: get of a tuple
+SRC:
+(get (tup 20 true (tup)) 2)
+EXPECTED:
+|ORACLE

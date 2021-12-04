@@ -1,0 +1,7 @@
+NAME: print - bool
+DESCRIPTION: print a number
+SRC:
+(print -20)
+EXPECTED:
+> -20
+-20

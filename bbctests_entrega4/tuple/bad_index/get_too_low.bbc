@@ -1,0 +1,7 @@
+NAME: get - too low index
+DESCRIPTION: get of a tuple
+STATUS: RT error
+SRC:
+(get (tup 20 true (tup)) -1)
+EXPECTED:
+Index too low, minimum index is 0\.

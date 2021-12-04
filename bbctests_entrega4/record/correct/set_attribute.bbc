@@ -1,0 +1,9 @@
+NAME: record - get an attribute
+DESCRIPTION: get an attribute
+SRC:
+(
+  (record point3d x y z)
+  (set (point3d 1 false (point3d 1 -20 2)) 1 true)
+)
+EXPECTED:
+(tup 1 true (tup 1 -20 2))

@@ -1,0 +1,6 @@
+NAME: let
+DESCRIPTION: let binding a variable
+SRC:
+(let (x 2) x)
+EXPECTED:
+|ORACLE

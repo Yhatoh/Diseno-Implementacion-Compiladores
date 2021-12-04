@@ -1,0 +1,6 @@
+NAME: get with set
+DESCRIPTION: get of a mutated tuple
+SRC:
+(get (set (tup 20 true (tup)) 2 true) 1)
+EXPECTED:
+|ORACLE

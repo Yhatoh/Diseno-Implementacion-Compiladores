@@ -1,0 +1,11 @@
+NAME: def - unbound id
+DESCRIPTION: call a function that is not defined
+STATUS: CT error
+SRC:
+(
+  (def (g x) (if (<= x 5) 5 z))
+  (def (f x y) (+ (+ 2 x) (g y)))
+  (f 5 3)
+)
+EXPECTED:
+Unbound identifier.

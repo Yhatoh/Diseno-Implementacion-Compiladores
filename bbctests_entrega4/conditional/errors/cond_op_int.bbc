@@ -1,4 +1,4 @@
-NAME: if - check type cond op is intould not open or parse test bbctests/GC/errors/big_a
+NAME: if - check type cond op is int
 DESCRIPTION: Expected a boolean in condition, but got an integer
 STATUS: RT error
 SRC:

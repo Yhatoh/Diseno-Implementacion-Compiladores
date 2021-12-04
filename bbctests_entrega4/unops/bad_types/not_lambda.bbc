@@ -1,0 +1,7 @@
+NAME: not - check type lambda
+DESCRIPTION: Expected boolean, but got lambda
+STATUS: RT error
+SRC:
+(not (lambda () (+ 1 1)))
+EXPECTED:
+Expected boolean, but got <clos:0>\.

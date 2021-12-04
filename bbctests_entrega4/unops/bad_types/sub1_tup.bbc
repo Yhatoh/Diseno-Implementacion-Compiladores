@@ -1,0 +1,7 @@
+NAME: sub1 - check type tuple
+DESCRIPTION: Expected integer, but got tuple
+STATUS: RT error
+SRC:
+(sub1 (tup 1 2 3))
+EXPECTED:
+Expected integer, but got (tup 1 2 3)\.

@@ -1,0 +1,7 @@
+NAME: lambda - check type is boolean
+DESCRIPTION: expected lambda, but got boolean
+STATUS: RT error
+SRC:
+(@ true 1)
+EXPECTED:
+Expected lambda, but got true\.

@@ -1,0 +1,7 @@
+NAME: not - check type tuple
+DESCRIPTION: Expected boolean, but got tuple
+STATUS: RT error
+SRC:
+(not (tup 1 2 3))
+EXPECTED:
+Expected boolean, but got (tup 1 2 3)\.

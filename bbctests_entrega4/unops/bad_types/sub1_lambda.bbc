@@ -1,0 +1,7 @@
+NAME: sub1 - check type lambda
+DESCRIPTION: Expected integer, but got lambda
+STATUS: RT error
+SRC:
+(sub1 (lambda () (+ 1 1)))
+EXPECTED:
+Expected integer, but got <clos:0>\.

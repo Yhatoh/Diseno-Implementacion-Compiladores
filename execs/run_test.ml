@@ -1217,11 +1217,11 @@ let ocaml_tests = [
     test_case "compile a compound" `Quick test_compile_compound;
     test_case "compile a print of int" `Quick test_compile_print_int;
     test_case "compile a print of bool" `Quick test_compile_print_bool;
-    test_case "compile a print of tuple" `Quick test_compile_print_tuple;
+    (*test_case "compile a print of tuple" `Quick test_compile_print_tuple;*)
     test_case "compile a function definition" `Quick test_compile_func_def;
     test_case "compile a function application" `Quick test_compile_func_app ;
     
-    test_case "compile a tuple definition" `Quick test_compile_tuple ;
+    (*test_case "compile a tuple definition" `Quick test_compile_tuple ;*)
     test_case "compile a tuple get" `Quick test_compile_get ;
     test_case "compile a tuple set" `Quick test_compile_set ;
   ];

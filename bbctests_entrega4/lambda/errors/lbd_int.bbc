@@ -1,0 +1,7 @@
+NAME: lambda - check type is int
+DESCRIPTION: expected lambda, but got integer
+STATUS: RT error
+SRC:
+(@ 2 1)
+EXPECTED:
+Expected lambda, but got 2\.

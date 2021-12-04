@@ -1,0 +1,8 @@
+NAME: GC - not enough memory for 2 allocation
+DESCRIPTION: not enough memory for 1 allocation
+PARAMS: STACK_SIZE=0x800000, HEAP_SIZE=16, USE_GC=1
+STATUS: RT error 
+SRC:
+(tup 1 2 3 (lambda (x) x) 5 6 7 8 9 10 11 12 13 14 15 16)
+EXPECTED:
+\n

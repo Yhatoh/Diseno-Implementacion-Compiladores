@@ -1,3 +1,7 @@
+NAME: GC - clean memory && multiple collect
+DESCRIPTION: clean the memory and multiple collect
+PARAMS: STACK_SIZE=0x800000, HEAP_SIZE=16, USE_GC=1
+SRC:
 (
   (def (f a b c d e f g) (let (lbd (lambda (x) (+ a (+ b (+ c (+ d (+ e (+ f (+ g x))))))))) (@ lbd 1)))
   (let (one 1) 
@@ -12,3 +16,5 @@
     )
   )
 )
+EXPECTED:
+(tup 40 1 23 23 123 124 123 24)

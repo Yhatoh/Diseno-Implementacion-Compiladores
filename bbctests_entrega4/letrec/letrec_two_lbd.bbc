@@ -1,0 +1,9 @@
+NAME: letrec - rec with two lambdas
+DESCRIPTION: recursion with two lambdas
+SRC:
+(letrec
+  ((even (lambda (n) (if (<= n 0) true (@ odd (+ n -1)))))
+    (odd  (lambda (n) (if (<= n 0) false (@ even (+ n -1))))))
+  (@ odd 13))
+EXPECTED:
+|ORACLE

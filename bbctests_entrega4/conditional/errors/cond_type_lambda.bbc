@@ -1,0 +1,7 @@
+NAME: if - check type cond is lambda
+DESCRIPTION: Expected a boolean in condition, but got a lambda
+STATUS: RT error
+SRC:
+(if (lambda (x) (+ 2 x)) true false)
+EXPECTED:
+Expected boolean, but got <clos:1>\.

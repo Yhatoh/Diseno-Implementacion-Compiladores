@@ -1,0 +1,7 @@
+NAME: let - unbound id
+DESCRIPTION: unbound variable
+STATUS: CT error
+SRC:
+(let (x 3) (let (y x) (let (x y) z)))
+EXPECTED:
+Unbound identifier.

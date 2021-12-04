@@ -1,0 +1,7 @@
+NAME: sub - check overflow
+DESCRIPTION: sub produces overflow
+STATUS: RT error
+SRC:
+(- 2305843009213693951 -1)
+EXPECTED:
+(\- 2305843009213693951 -1) will produce overflow\.

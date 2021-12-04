@@ -1,0 +1,7 @@
+NAME: lte - check type e2 is tuple
+DESCRIPTION: Expected integer, but got tuple in the second expression
+STATUS: RT error
+SRC:
+(<= -2 (tup 1 2 3))
+EXPECTED:
+Expected integer, but got (tup 1 2 3)\.

@@ -963,6 +963,18 @@ let rec compile_funcs (func_list : tag tfun_def list) (cfenv : comp_fenv) : inst
       compd_fenv
     )
 
+
+let error_function_asm (label : string) (r1 : string) (r2 : string) (name_fun : string) : string =
+  (sprintf "
+%s:
+  push RSI
+  push RDI
+  mov RSI, %s
+  mov RDI, %s
+  call %s"
+  label r2 r1 name_fun
+  )
+
 (* Prints the program p (given in abstract Scheme syntax) in NASM code. *)
 let compile_prog p : string =
   let (tagged_funcs, tagged_main) = tag_prog p in
@@ -988,37 +1000,13 @@ extern getUseGC
 extern try_gc
 global our_code_starts_here
 our_code_starts_here:" in
-  let error_section = "
-error_not_number:
-  push RSI
-  push RDI
-  mov RSI, RAX
-  mov RDI, 0x1
-  call typeError
-error_not_boolean:
-  push RSI
-  push RDI
-  mov RSI, RAX
-  mov RDI, 0x2
-  call typeError
-error_not_tuple:
-  push RSI
-  push RDI
-  mov RSI, RAX
-  mov RDI, 0x3
-  call typeError
-error_not_lambda:
-  push RSI
-  push RDI
-  mov RSI, RAX
-  mov RDI, 0x4
-  call typeError
-index_too_high:
-  push RSI
-  push RDI
-  mov RDI, R11
-  mov RSI, [R10]
-  call indexError
+  let error_section = 
+  (error_function_asm "error_not_number" "0x1" "RAX" "typeError") ^
+  (error_function_asm "error_not_boolean" "0x2" "RAX" "typeError") ^
+  (error_function_asm "error_not_tuple" "0x3" "RAX" "typeError") ^
+  (error_function_asm "error_not_lambda" "0x4" "RAX" "typeError") ^
+  (error_function_asm "index_too_high" "R11" "[R10]" "indexError") ^
+  "
 error_wrong_arity:
   push RSI
   push RDI
@@ -1032,5 +1020,5 @@ index_too_low:
   mov RDI, R11
   mov RSI, [R10]
   mov RDI, 0
-  call indexError" in
+  call indexError"in
   prelude ^ init_heap ^ pp_instrs (instrs_main)^ pp_instrs intrs_funs ^ error_section

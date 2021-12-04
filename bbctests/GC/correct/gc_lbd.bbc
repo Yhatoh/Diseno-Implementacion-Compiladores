@@ -1,0 +1,18 @@
+NAME: GC - clean memory && alloc lbd
+DESCRIPTION: clean the memory to allocate a lambda
+PARAMS: STACK_SIZE=0x800000, HEAP_SIZE=16, USE_GC=1
+SRC:
+(
+  (def (f a b c d e f g) (let (lbd (lambda (x) (+ a (+ b (+ c (+ d (+ e (+ f (+ g x))))))))) (@ lbd 1)))
+  (let (one 1) 
+    (let (two 2)
+      (let (three 3)
+        (let (four 4) 
+          (@ (lambda (x) (+ x (+ one (+ two (+ three (+ four (f 1 2 3 4 5 6 7))))))) 1)
+        )
+      )
+    )
+  )
+)
+EXPECTED:
+40

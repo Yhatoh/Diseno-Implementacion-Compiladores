@@ -1,0 +1,10 @@
+NAME: record - attribute no exist
+DESCRIPTION: attribute no exist
+STATUS: CT error
+SRC:
+(
+  (record point3d x y z)
+  (point3d-h (point3d 1 false (point3d 1 -20 2)))
+)
+EXPECTED:
+Record point3d doesn't have h attribute

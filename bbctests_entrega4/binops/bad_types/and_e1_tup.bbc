@@ -1,0 +1,7 @@
+NAME: and - check type e1 is tuple
+DESCRIPTION: Expected boolean, but got tuple in the first expression
+STATUS: RT error
+SRC:
+(and (tup 1 2 3) true)
+EXPECTED:
+Expected boolean, but got (tup 1 2 3)\.
