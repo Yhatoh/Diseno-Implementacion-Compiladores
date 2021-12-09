@@ -479,16 +479,7 @@ let binop_boolean_to_instr_list (second_arg_eval : instruction list) (tag : int)
   second_arg_eval @
   [i_label skip_label]
 
-let gc_snippet (words_needed : int64) (tag : tag) (tag_fun : tag) : instruction list = 
-  (store_r10_r11) @
-  (store_first_6_args) @
-  [iCall_string "getUseGC"] @
-  pop_first_6_args @
-  pop_r10_r11 @
-  [
-    iCmp_arg_const rax 1L;
-    i_jne (sprintf "not_gc_%d_%d" tag tag_fun)
-  ] @
+let gc_snippet (words_needed : int64) : instruction list = 
   (store_r10_r11) @
   (store_first_6_args) @
   [
@@ -500,10 +491,7 @@ let gc_snippet (words_needed : int64) (tag : tag) (tag_fun : tag) : instruction 
   ] @
   pop_first_6_args @
   pop_r10_r11 @
-  [
-    iMov_arg_arg r15 rax;
-    i_label (sprintf "not_gc_%d_%d" tag tag_fun)
-  ]
+  [iMov_arg_arg r15 rax;]
 
 (* Compiles the value binding to an identifier. *)
 let rec compile_tid (slot_env : slot_env) (s : string) : instruction list =
@@ -636,7 +624,7 @@ and compile_apply (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_f
   @ pop_first_6_args
   @ pop_r10_r11
 (* Compilation of tuple creation. *)
-and compile_tuple (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) (attrs : tag texpr list) (tag : tag) : instruction list =
+and compile_tuple (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_fun : tag) (total_params : int) (attrs : tag texpr list) : instruction list =
   let next_slot = (Int64.sub slot 1L) in
   let num_attrs = (List.length attrs + 1) in
   let compile_tuple_help (lst : tag texpr list) : instruction list =
@@ -660,7 +648,7 @@ and compile_tuple (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (tag_f
       iPop r11
     ]
   in
-  (gc_snippet (Int64.of_int num_attrs) tag tag_fun) @ 
+  (gc_snippet (Int64.of_int num_attrs)) @ 
   (compile_tuple_help attrs) @
   [
     iAdd_arg_const r15 7L ;
@@ -789,7 +777,7 @@ and compile_lambda (slot_env : slot_env) (fenv : comp_fenv) (tag_fun : tag) (tot
   in 
   let new_slot_value = (Int64.add (Int64.mul cant_vars (-1L)) (-1L)) in
   
-  (gc_snippet (Int64.of_int ((List.length clean_lambda_env) + 3)) t tag_fun)@
+  (gc_snippet (Int64.of_int ((List.length clean_lambda_env) + 3)))@
   [
    i_jmp end_lambda ;
    i_label start_lambda ; 
@@ -934,7 +922,7 @@ and compile_expr (e : tag texpr) (slot_env : slot_env) (slot : int64) (fenv : co
   | TPrim2 (op, n1, n2, tag) -> compile_prim2 slot_env slot fenv tag_fun total_params op n1 n2 tag
   | TIf(cond, thn, els, tag) -> compile_if slot_env slot fenv tag_fun total_params cond thn els tag
   | TApply(nm, args, _) -> compile_apply slot_env slot fenv tag_fun total_params nm args
-  | TTuple(attrs, tag) -> compile_tuple slot_env slot fenv tag_fun total_params attrs tag
+  | TTuple(attrs, _) -> compile_tuple slot_env slot fenv tag_fun total_params attrs
   | TSet(t, pos, value, _) -> compile_set slot_env slot fenv tag_fun total_params t pos value 
   | TLambda(arg_names, e, tag) -> compile_lambda slot_env fenv tag_fun total_params arg_names e tag
   | TLamApply(lbd, args, _) -> compile_lamapply slot_env slot fenv tag_fun total_params lbd args
