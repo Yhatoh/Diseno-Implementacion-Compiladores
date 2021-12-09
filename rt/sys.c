@@ -10,8 +10,8 @@ typedef int64_t u64;
 
 /* configuration */
 u64 STACK_SIZE = 0x800000;
-u64 HEAP_SIZE = 16;
-int USE_GC = 1;
+u64 HEAP_SIZE = 64;
+int USE_GC = 0;
 
 /* externs */
 extern void error(u64 err_code, u64 val) asm("error");
@@ -373,11 +373,6 @@ u64* try_gc(u64* alloc_ptr, u64 words_needed, u64* cur_frame, u64* cur_sp) {
     exit(-1);
   }
   return alloc_ptr;
-}
-
-// return if we are using GC or not
-u64 getUseGC(){
-  return USE_GC;
 }
 
 int main(int argc, char** argv) {

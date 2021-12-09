@@ -984,7 +984,6 @@ extern indexError
 extern print
 extern typeError
 extern wrongArity
-extern getUseGC
 extern try_gc
 global our_code_starts_here
 our_code_starts_here:" in
