@@ -372,7 +372,7 @@ u64* try_gc(u64* alloc_ptr, u64 words_needed, u64* cur_frame, u64* cur_sp) {
     check_cleaned_from_space();
   }
   if (alloc_ptr + words_needed > TO_SPACE + HEAP_SIZE) {
-    printf("Error: out of memory!\n\n");
+    printf("Out of memory\n\n");
     print_stack(cur_frame, cur_sp);
     print_heaps();
     exit(-1);
