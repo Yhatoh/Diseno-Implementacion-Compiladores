@@ -101,7 +101,7 @@ void indexError(u64 index, u64 sizeTuple) {
 
 // print wrong arity
 void wrongArity(u64 arity, u64 givenArity) {
-  printf("Arity mismatch, expected %" PRId64 " arguments got %" PRId64 " arguments.\n", arity, givenArity);
+  printf("Arity mismatch, expected %" PRId64 " arguments got %" PRId64 " arguments.\n", (arity  / ARITHMETIC_SHIFT_VAL), givenArity);
   exit(ERROR_WRONG_ARITY);
 }
 
@@ -214,7 +214,7 @@ void print_value(u64 value){
     print_tuple(value);
   } else if (is_lbd(value)) {
     uint64_t* tuplePtr = (uint64_t*)(value - 3LL);
-    printf("<clos:%" PRId64 ">", *tuplePtr);
+    printf("<clos:%" PRId64 ">", (*tuplePtr) / ARITHMETIC_SHIFT_VAL);
   }
 }
 
@@ -304,6 +304,11 @@ u64 size_of_ptr(u64* o, u64 tag){
 
 // copy from one heap to another
 u64* copy(u64* o, u64 tag){
+  if(is_tuple(*o) || is_lbd(*o)){
+    u64 tag_o = (((u64)*o) & 3LL);
+    u64 *ret = (u64*)(((u64)*o) - tag_o);
+    return ret; 
+  }
   u64* new_o = ALLOC_PTR;
   u64 size_o = size_of_ptr(o, tag);
 
@@ -312,7 +317,7 @@ u64* copy(u64* o, u64 tag){
   for(u64 i = 0; i < size_o; i++){
     *(new_o + i) = *(o + i);
   }
-
+  *o = ((u64)new_o) + tag;
   return new_o;
 }
 
@@ -325,7 +330,7 @@ u64* collect(u64* cur_frame, u64* cur_sp) {
   ALLOC_PTR = TO_SPACE;
   SCAN_PTR = TO_SPACE;
   // scan stack and copy roots
-  for (u64* root = cur_sp; root < cur_frame; root++) {
+  for (u64* root = cur_sp; root < STACK_BOTTOM; root++) {
     u64 tag_root = (((u64)*root) & 3LL);
     u64* root_no_tag = (u64*)(((u64)*root) - tag_root);
     if(is_heap_ptr((u64)root_no_tag) && (!is_num(tag_root)) && (!is_bool(tag_root))){
@@ -353,7 +358,7 @@ u64* collect(u64* cur_frame, u64* cur_sp) {
 void check_cleaned_from_space(){
   for(u64* i = FROM_SPACE; i < FROM_SPACE + HEAP_SIZE; i++){
     if(*i != 0x0){
-      printf("| FROM_SPACE NOT CLEANED CORRECTLY\n");
+      printf("FROM_SPACE NOT CLEANED CORRECTLY\n");
       exit(245003);
     }
   }
@@ -367,7 +372,7 @@ u64* try_gc(u64* alloc_ptr, u64 words_needed, u64* cur_frame, u64* cur_sp) {
     check_cleaned_from_space();
   }
   if (alloc_ptr + words_needed > TO_SPACE + HEAP_SIZE) {
-    printf("| Error: out of memory!\n\n");
+    printf("Error: out of memory!\n\n");
     print_stack(cur_frame, cur_sp);
     print_heaps();
     exit(-1);

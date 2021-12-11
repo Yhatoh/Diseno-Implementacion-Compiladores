@@ -73,6 +73,14 @@ let type_of_binops (operation : prim2) (slot : int64) : instruction list =
   | And -> check_rax_is_bool_instr slot
   | Get -> []
 
+let set_stack_bootom : instruction list =
+  [
+    iPush rdi ;
+    iMov_arg_arg rdi rbp ;
+    iCall_string "set_stack_bottom";
+    iPop rdi;
+  ]
+
 (* Protocol for setting stack before a function call. *)
 let function_start (n_local_vars : int64) : instruction list =
   [
@@ -485,8 +493,11 @@ let gc_snippet (words_needed : int64) : instruction list =
   [
     iMov_arg_arg rdi r15;
     iMov_arg_const rsi words_needed;
-    iMov_arg_arg rdx rbp;
-    iMov_arg_arg rcx rsp;
+    iMov_arg_arg r10 rbp;
+    iMov_arg_arg r11 rsp;
+    
+    iMov_arg_arg rdx r10;
+    iMov_arg_arg rcx r11;
     iCall_string "try_gc";
   ] @
   pop_first_6_args @
@@ -764,7 +775,7 @@ and compile_lambda (slot_env : slot_env) (fenv : comp_fenv) (tag_fun : tag) (tot
      iPush r11;
      iMov_arg_arg r11 r15;
      iAdd_arg_const r15 (Int64.mul 8L (Int64.add 3L cant_vars));
-     iMov_arg_const (Ptr(R11, 0L)) (Int64.of_int (List.length arg_names));
+     iMov_arg_const (Ptr(R11, 0L)) (Int64.mul (Int64.of_int (List.length arg_names)) add_int_tag);
      IMov((Ptr(R11, 1L)), FLabel start_lambda);
      iMov_arg_const (Ptr(R11, 2L)) cant_vars;
     ] @ 
@@ -821,7 +832,7 @@ and compile_lamapply (slot_env : slot_env) (slot : int64) (fenv : comp_fenv) (ta
     iPush r11 ;
     iMov_arg_arg r11 rax ;
     iSub_arg_const rax lambda_tag ;
-    iCmp_arg_const (Ptr(RAX, 0L)) (Int64.of_int largs) ;
+    iCmp_arg_const (Ptr(RAX, 0L)) (Int64.mul (Int64.of_int largs) add_int_tag) ;
     iPush r10 ;
     iMov_arg_const r10 (Int64.of_int largs) ;
     i_jne "error_wrong_arity" ;
@@ -982,6 +993,7 @@ extern check_overflow_mul
 extern check_div_by_0
 extern indexError
 extern print
+extern set_stack_bottom
 extern typeError
 extern wrongArity
 extern try_gc

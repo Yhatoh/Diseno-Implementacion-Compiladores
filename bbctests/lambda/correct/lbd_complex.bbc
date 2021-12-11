@@ -1,5 +1,6 @@
 NAME: lambda
 DESCRIPTION: lambda more complex
+PARAMS: STACK_SIZE=0x800000, HEAP_SIZE=32, USE_GC=0
 SRC:
 (
   (def (fib n) (if (<= n 1) 1 (+ (fib (+ n -1)) (fib (+ n -2)))))

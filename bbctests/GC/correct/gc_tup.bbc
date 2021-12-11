@@ -1,6 +1,6 @@
 NAME: GC - clean memory && alloc tup
 DESCRIPTION: clean the memory to allocate a tuple
-PARAMS: STACK_SIZE=0x800000, HEAP_SIZE=16, USE_GC=1
+PARAMS: STACK_SIZE=0x800000, HEAP_SIZE=32, USE_GC=1
 SRC:
 (
   (def (f) (get (tup (tup 1 2 3) (tup 1 2 3) (tup 8 -20)) 2))
