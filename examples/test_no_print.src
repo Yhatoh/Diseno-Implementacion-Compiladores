@@ -1,1 +1,11 @@
-(tup 1 2 3 (lambda (x) x) 5 6 7 8 9 10 11 12 13 14 15 16)
+(let (tupcreator (lambda (x) (let (t (tup 1 2 3 4 5 6 7))
+                        x)))
+(let (a (@ tupcreator 1))
+      (let (t (tup 1 2 3))
+        (let (b (@ tupcreator 2))
+          (let (c (@ tupcreator 3))
+            (let (d (@ tupcreator 4))
+              (let (e (@ tupcreator 7))
+                t))))))
+
+      )

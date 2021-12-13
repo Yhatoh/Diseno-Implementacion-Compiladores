@@ -10,8 +10,8 @@ typedef int64_t u64;
 
 /* configuration */
 u64 STACK_SIZE = 0x800000;
-u64 HEAP_SIZE = 64;
-int USE_GC = 0;
+u64 HEAP_SIZE = 16;
+int USE_GC = 1;
 
 /* externs */
 extern void error(u64 err_code, u64 val) asm("error");

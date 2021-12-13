@@ -73,7 +73,7 @@ let type_of_binops (operation : prim2) (slot : int64) : instruction list =
   | And -> check_rax_is_bool_instr slot
   | Get -> []
 
-let set_stack_bootom : instruction list =
+let set_stack_bottom : instruction list =
   [
     iPush rdi ;
     iMov_arg_arg rdi rbp ;
@@ -979,7 +979,7 @@ let compile_prog p : string =
   let (tagged_funcs, tagged_main) = tag_prog p in
   let (intrs_funs, cfenv)  = (compile_funcs tagged_funcs (("type_mismatch", [])::empty_comp_fenv)) in 
   let n_lets_main = count_exprs tagged_main in
-  let instrs_main = function_start n_lets_main @ compile_expr tagged_main empty_slot_env Int64.minus_one cfenv 0 0 @ function_end in
+  let instrs_main = function_start n_lets_main @ set_stack_bottom @ compile_expr tagged_main empty_slot_env Int64.minus_one cfenv 0 0 @ function_end in
   let init_heap = "
   mov R15, RDI
   add R15, 7
